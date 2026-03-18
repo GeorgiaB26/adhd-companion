@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, CartesianGrid } from "recharts";
-import { Heart, Brain, Zap, Sun, Moon, Cloud, CloudRain, AlertTriangle, Check, Plus, X, ChevronLeft, ChevronRight, Pill, Wind, Clock, Bell, TrendingDown, TrendingUp, Activity, BookOpen, Smile, Trash2, Star, Shield, Eye, Target, Volume2, VolumeX, Feather, MoreHorizontal, Play, Pause, RotateCcw, Sparkles, Trophy, FileText, ChevronDown, ChevronUp, Bed, Droplets, Coffee, ListChecks, Rocket, Timer } from "lucide-react";
+import { Heart, Brain, Zap, Sun, Moon, Cloud, CloudRain, AlertTriangle, Check, Plus, X, ChevronLeft, ChevronRight, Pill, Wind, Clock, Bell, TrendingDown, TrendingUp, Activity, BookOpen, Smile, Trash2, Star, Shield, Eye, Target, Volume2, VolumeX, Feather, MoreHorizontal, Play, Pause, RotateCcw, Sparkles, Trophy, FileText, ChevronDown, ChevronUp, Bed, Droplets, Coffee, ListChecks, Rocket, Timer, MessageCircle } from "lucide-react";
 
 // ─── Theme ──────────────────────────────────────────────────────────
 const C = {
@@ -356,7 +356,7 @@ export default function ADHDCompanion() {
   };
   const saveJournal = () => {
     if(!journalText.trim()){notify("Write something first — even one sentence counts.","warn");return;}
-    setJournalEntries(p=>[...p,{id:Date.now().toString(),date:dateKey(),time:timeStr(),text:journalText.trim(),mood:journalMood,prompt,words:journalText.trim().split(/s+/).length}]);
+    setJournalEntries(p=>[...p,{id:Date.now().toString(),date:dateKey(),time:timeStr(),text:journalText.trim(),mood:journalMood,prompt,words:journalText.trim().split(/\s+/).length}]);
     setJournalText(""); setJournalMood(null);
     notify("Journal entry saved. Writing is processing — well done.","success");
   };
@@ -415,9 +415,144 @@ export default function ADHDCompanion() {
     return {date:fmtDate(d),day:dayName(d),hours:hrs.length>0?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length*10)/10:null};
   });
 
+
+  // Pattern Reflection Engine
+  const generateInsights = () => {
+    const insights = [];
+    if(entries.length < 3) return insights;
+    // Day-of-week patterns
+    const moodByDow = {};
+    entries.forEach(e => {
+      const dow = new Date(e.date).getDay();
+      if(!moodByDow[dow]) moodByDow[dow] = [];
+      if(e.mood) moodByDow[dow].push(e.mood);
+    });
+    const dowNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    for(const [dow, moods] of Object.entries(moodByDow)) {
+      if(moods.length >= 3) {
+        const avg = moods.reduce((a,b)=>a+b,0)/moods.length;
+        const overall = entries.filter(e=>e.mood).map(e=>e.mood).reduce((a,b)=>a+b,0)/entries.filter(e=>e.mood).length;
+        if(avg < overall - 0.5) {
+          insights.push({type:"dow",icon:Cloud,title:`Your week & ${dowNames[dow]}`,message:`Your mood tends to dip on ${dowNames[dow]}s (avg ${avg.toFixed(1)} vs ${overall.toFixed(1)} overall). What's draining about that day?`,color:C.warn});
+        }
+      }
+    }
+    // Sleep-mood correlation
+    const sleepMoods = entries.filter(e=>e.sleepHours&&e.mood).map(e=>({sleep:parseFloat(e.sleepHours),mood:e.mood}));
+    if(sleepMoods.length >= 5) {
+      const lowSleep = sleepMoods.filter(s=>s.sleep<6);
+      const goodSleep = sleepMoods.filter(s=>s.sleep>=7);
+      if(lowSleep.length>=3 && goodSleep.length>=3) {
+        const avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
+        const avgGood = goodSleep.reduce((a,e)=>a+e.mood,0)/goodSleep.length;
+        if(avgGood > avgLow + 0.5) {
+          insights.push({type:"sleep",icon:Bed,title:"Sleep is your superpower",message:`When you sleep under 6hrs, mood averages ${avgLow.toFixed(1)}. With 7+, it's ${avgGood.toFixed(1)}. Even one extra hour matters.`,color:C.acc});
+        }
+      }
+    }
+    // Emotion frequency changes
+    const recent7e = entries.slice(-7).map(e=>e.emotions||[]).flat();
+    const prev7e = entries.slice(-14,-7).map(e=>e.emotions||[]).flat();
+    if(recent7e.length > 0 && prev7e.length > 0) {
+      const freqRecent = {}, freqPrev = {};
+      recent7e.forEach(em => freqRecent[em] = (freqRecent[em]||0) + 1);
+      prev7e.forEach(em => freqPrev[em] = (freqPrev[em]||0) + 1);
+      for(const [em, freq] of Object.entries(freqRecent)) {
+        const prevFreq = freqPrev[em] || 0;
+        if(freq >= 4 && freq > prevFreq * 1.5) {
+          insights.push({type:"emotion",icon:Smile,title:`Feeling "${em}" more`,message:`You logged "${em}" ${freq} times this week vs ${prevFreq} before. What shifted?`,color:C.pri});
+          break;
+        }
+      }
+    }
+    // Medication + mood
+    const medTakenEntries = entries.filter(e=>Object.values(e.medTaken||{}).some(x=>x===true)&&e.mood);
+    const medSkippedEntries = entries.filter(e=>!Object.values(e.medTaken||{}).some(x=>x===true)&&e.mood);
+    if(medTakenEntries.length >= 3 && medSkippedEntries.length >= 3) {
+      const avgTaken = medTakenEntries.reduce((a,e)=>a+e.mood,0)/medTakenEntries.length;
+      const avgSkipped = medSkippedEntries.reduce((a,e)=>a+e.mood,0)/medSkippedEntries.length;
+      if(avgTaken > avgSkipped + 0.4) {
+        const medName = meds[0]?.name || "your med";
+        insights.push({type:"med",icon:Pill,title:"Your medication helps",message:`Days you take ${medName}, mood averages ${avgTaken.toFixed(1)}. Days you skip, ${avgSkipped.toFixed(1)}. Worth noting for your doctor.`,color:C.acc});
+      }
+    }
+    // Energy patterns
+    const energyByTime = {};
+    entries.forEach(e => {
+      const hour = parseInt(e.time.split(":")[0]) || 12;
+      const period = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+      if(!energyByTime[period]) energyByTime[period] = [];
+      if(e.energy) energyByTime[period].push(e.energy);
+    });
+    for(const [period, energies] of Object.entries(energyByTime)) {
+      if(energies.length >= 3) {
+        const avg = energies.reduce((a,b)=>a+b,0)/energies.length;
+        const overall = entries.filter(e=>e.energy).map(e=>e.energy).reduce((a,b)=>a+b,0)/entries.filter(e=>e.energy).length;
+        if(avg > overall + 0.5) {
+          insights.push({type:"energy",icon:Zap,title:`Energy peak: ${period}`,message:`Your energy peaks in the ${period}. Schedule hard tasks then. Work WITH your rhythm.`,color:C.warn});
+          break;
+        }
+      }
+    }
+    // Win streaks
+    const thisWeekWins = wins.filter(w=>new Date(w.date)>new Date(Date.now()-7*24*60*60*1000)).length;
+    const lastWeekWins = wins.filter(w=>new Date(w.date)>new Date(Date.now()-14*24*60*60*1000)&&new Date(w.date)<=new Date(Date.now()-7*24*60*60*1000)).length;
+    if(thisWeekWins >= 3 && thisWeekWins > lastWeekWins) {
+      insights.push({type:"wins",icon:Trophy,title:"You're on a roll!",message:`You logged ${thisWeekWins} wins this week vs ${lastWeekWins} last week. That's you showing up.`,color:C.acc});
+    }
+    // Focus trends
+    const focusRecent = entries.slice(-7).filter(e=>e.focus).map(e=>e.focus);
+    const focusPrev = entries.slice(-14,-7).filter(e=>e.focus).map(e=>e.focus);
+    if(focusRecent.length >= 3 && focusPrev.length >= 3) {
+      const rA = focusRecent.reduce((a,b)=>a+b,0)/focusRecent.length;
+      const pA = focusPrev.reduce((a,b)=>a+b,0)/focusPrev.length;
+      if(rA > pA + 0.5) insights.push({type:"focus",icon:Target,title:"Focus improving",message:`This week focus averaged ${rA.toFixed(1)} vs ${pA.toFixed(1)} last week. Keep it up.`,color:C.acc});
+      else if(rA < pA - 0.5) insights.push({type:"focus",icon:Target,title:"Focus slipping",message:`Focus dropped from ${pA.toFixed(1)} to ${rA.toFixed(1)}. Sleep? Stress? Meds?`,color:C.warn});
+    }
+    // Cycle-mood connection
+    const hasCycle = entries.some(e=>e.cycle&&e.cycle!=="na"&&e.cycle!=="unsure");
+    if(hasCycle) {
+      const cyclePhases = {};
+      entries.filter(e=>e.cycle&&e.cycle!=="na"&&e.cycle!=="unsure").forEach(e=>{
+        if(!cyclePhases[e.cycle]) cyclePhases[e.cycle] = [];
+        if(e.mood) cyclePhases[e.cycle].push(e.mood);
+      });
+      const phaseNames = {menstrual:"Period",follicular:"Follicular",ovulation:"Ovulation",luteal_early:"Early Luteal",luteal_late:"Late Luteal"};
+      const phases = Object.entries(cyclePhases).sort((a,b)=>b[1].length-a[1].length);
+      if(phases.length >= 2) {
+        const [p1, m1] = phases[0], [p2, m2] = phases[1];
+        if(m1.length >= 3 && m2.length >= 3) {
+          const a1 = m1.reduce((a,b)=>a+b,0)/m1.length, a2 = m2.reduce((a,b)=>a+b,0)/m2.length;
+          if(Math.abs(a1-a2) > 0.5) insights.push({type:"cycle",icon:Heart,title:"Cycle & mood connected",message:`During ${phaseNames[p1]||p1}, mood averages ${a1.toFixed(1)}. During ${phaseNames[p2]||p2}, ${a2.toFixed(1)}. Share with your doctor.`,color:C.rose});
+        }
+      }
+    }
+    // Journaling impact
+    const journalDates = new Set(journalEntries.map(j=>j.date));
+    const jM = entries.filter(e=>journalDates.has(e.date)&&e.mood).map(e=>e.mood);
+    const njM = entries.filter(e=>!journalDates.has(e.date)&&e.mood).map(e=>e.mood);
+    if(jM.length >= 3 && njM.length >= 3) {
+      const aJ = jM.reduce((a,b)=>a+b,0)/jM.length, aN = njM.reduce((a,b)=>a+b,0)/njM.length;
+      if(aJ > aN + 0.4) insights.push({type:"journal",icon:Feather,title:"Writing helps your mood",message:`On journal days, mood averages ${aJ.toFixed(1)} vs ${aN.toFixed(1)}. Writing is processing.`,color:C.acc});
+    }
+    // Spiral warning
+    const r3 = entries.slice(-3).filter(e=>e.mood).map(e=>e.mood);
+    if(r3.length===3 && r3.every((v,i)=>i===0||v<=r3[i-1]) && r3[r3.length-1]<=2) {
+      insights.push({type:"spiral",icon:AlertTriangle,title:"I'm noticing a pattern",message:"3+ days of declining mood. This is a wave, not a cliff. Try a grounding exercise.",color:C.danger});
+    }
+    // Consecutive low days
+    const rm = entries.slice(-14).filter(e=>e.mood).map(e=>e.mood);
+    let ls = 0; for(let i=rm.length-1;i>=0;i--){if(rm[i]<=3)ls++;else break;}
+    if(ls>=5&&ls<=10) insights.push({type:"lowstreak",icon:Cloud,title:`${ls} rough days`,message:`${ls} days below a 3. Rough patches happen. Be extra gentle with yourself.`,color:C.warn});
+    return insights.slice(0, 8);
+  };
+
+  const insights = generateInsights();
+
   // ─── Tabs Config ──────────────────────────────────────────────────
   const tabs = [
     {id:"home",icon:Heart,label:"Home"},
+    {id:"coach",icon:MessageCircle,label:"Coach"},
     {id:"checkin",icon:Smile,label:"Check In"},
     {id:"journal",icon:Feather,label:"Journal"},
     {id:"meds",icon:Pill,label:"Meds"},
@@ -521,6 +656,28 @@ export default function ADHDCompanion() {
         </Card>
       )}
 
+
+      {/* Coach's Corner */}
+      {insights.length > 0 && (
+        <div style={{marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:0}}>Coach's Corner</h3>
+            <button onClick={()=>setTab("coach")} style={{fontSize:12,color:C.pri,fontWeight:600,background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>See more</button>
+          </div>
+          {insights.slice(0,2).map((ins,i)=>(
+            <Card key={i} style={{background:ins.color+"10",border:`1px solid ${ins.color}30`,marginBottom:10}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <ins.icon size={20} color={ins.color} style={{flexShrink:0,marginTop:2}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:14,color:ins.color,marginBottom:2}}>{ins.title}</div>
+                  <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:0}}>{ins.message}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {entries.slice(-3).reverse().map(e => (
         <Card key={e.id} style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -532,6 +689,156 @@ export default function ADHDCompanion() {
       ))}
     </div>
   );
+
+  // ═════════════════════════════════════════════════════════════════
+
+  // COACH
+  const renderCoach = () => {
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const lastEntry = entries.length > 0 ? entries[entries.length-1] : null;
+    const recentEntries = entries.slice(-7);
+    const rAM = recentEntries.filter(e=>e.mood).length > 0 ? recentEntries.filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/recentEntries.filter(e=>e.mood).length : 0;
+    const lAM = entries.slice(-14,-7).filter(e=>e.mood).length > 0 ? entries.slice(-14,-7).filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/entries.slice(-14,-7).filter(e=>e.mood).length : 0;
+    const rAE = recentEntries.filter(e=>e.energy).length > 0 ? recentEntries.filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/recentEntries.filter(e=>e.energy).length : 0;
+    const lAE = entries.slice(-14,-7).filter(e=>e.energy).length > 0 ? entries.slice(-14,-7).filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/entries.slice(-14,-7).filter(e=>e.energy).length : 0;
+    const rAF = recentEntries.filter(e=>e.focus).length > 0 ? recentEntries.filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/recentEntries.filter(e=>e.focus).length : 0;
+    const lAF = entries.slice(-14,-7).filter(e=>e.focus).length > 0 ? entries.slice(-14,-7).filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/entries.slice(-14,-7).filter(e=>e.focus).length : 0;
+    const mC = lAM > 0 ? Math.round((rAM-lAM)/lAM*100) : 0;
+    const eC = lAE > 0 ? Math.round((rAE-lAE)/lAE*100) : 0;
+    const fC = lAF > 0 ? Math.round((rAF-lAF)/lAF*100) : 0;
+    const currentPhase = entries.length > 0 ? entries[entries.length-1].cycle : null;
+    const currentPhaseData = CYCLE_PHASES.find(p => p.id === currentPhase);
+    return (
+      <div>
+        <div style={{marginBottom:24}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+            <MessageCircle size={28} color={C.pri}/>
+            <h1 style={{fontSize:26,fontWeight:700,color:C.txt,margin:0}}>Your Coach</h1>
+          </div>
+          <p style={{color:C.txtL,marginTop:4,fontSize:15,lineHeight:1.5}}>
+            {greeting}! I've been paying attention to your patterns. Here's what I'm noticing.
+          </p>
+        </div>
+        <Card style={{background:C.priL+"15",border:`1px solid ${C.priL}`}}>
+          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 8px"}}>Right Now</h3>
+          {lastEntry ? (
+            <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>
+              {spiral==="spiral"
+                ? "I see you're in a rough patch. That's a wave, not a failure. This will pass. Try something grounding."
+                : lastEntry.mood>=4
+                ? `You're feeling ${MOODS[5-lastEntry.mood]?.label?.toLowerCase()||"great"}! What's working? Keep doing it.`
+                : lastEntry.mood===3
+                ? "You're in the okay zone. What small thing would help right now?"
+                : "You're struggling. Be gentle. Even checking in is self-care."}
+            </p>
+          ) : (
+            <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>No check-in yet today. When you're ready, a quick pulse helps me understand your patterns.</p>
+          )}
+        </Card>
+        {insights.length > 0 && (
+          <div>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>What I'm Noticing</h3>
+            {insights.slice(0,5).map((ins,i)=>(
+              <Card key={i} style={{background:ins.color+"10",border:`1px solid ${ins.color}30`}}>
+                <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                  <ins.icon size={20} color={ins.color} style={{flexShrink:0,marginTop:2}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:14,color:ins.color,marginBottom:4}}>{ins.title}</div>
+                    <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:0}}>{ins.message}</p>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+        {entries.length >= 7 && (
+          <div>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>This Week vs Last Week</h3>
+            <Card style={{background:C.bg}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+                <div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.pri}}>{rAM.toFixed(1)}</div>
+                  <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Mood</div>
+                  <div style={{fontSize:12,fontWeight:600,color:mC>=0?C.acc:C.danger,marginTop:4}}>{mC>=0?<>&#8593; {mC}%</>:<>&#8595; {Math.abs(mC)}%</>}</div>
+                </div>
+                <div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.acc}}>{rAE.toFixed(1)}</div>
+                  <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Energy</div>
+                  <div style={{fontSize:12,fontWeight:600,color:eC>=0?C.acc:C.danger,marginTop:4}}>{eC>=0?<>&#8593; {eC}%</>:<>&#8595; {Math.abs(eC)}%</>}</div>
+                </div>
+                <div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.purp}}>{rAF.toFixed(1)}</div>
+                  <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Focus</div>
+                  <div style={{fontSize:12,fontWeight:600,color:fC>=0?C.acc:C.danger,marginTop:4}}>{fC>=0?<>&#8593; {fC}%</>:<>&#8595; {Math.abs(fC)}%</>}</div>
+                </div>
+              </div>
+              <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:"16px 0 0",paddingTop:12,borderTop:`1px solid ${C.brd}`}}>
+                {eC >= 10 ? `Energy is up ${eC}%! Whatever you're doing, keep it up.`
+                 : mC >= 15 ? "You're on an upswing. Keep riding this wave."
+                 : fC <= -10 ? "Focus is dipping. Check: sleep okay? Meds on track?"
+                 : "You're showing up consistently. That matters."}
+              </p>
+            </Card>
+          </div>
+        )}
+        {currentPhaseData && currentPhaseData.id !== "na" && (
+          <div>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>Cycle Awareness</h3>
+            <Card style={{background:C.roseL+"15",border:`1px solid ${C.rose}40`}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                <Heart size={20} color={C.rose}/>
+                <div>
+                  <div style={{fontWeight:600,color:C.rose}}>You're in your {currentPhaseData.label}</div>
+                  <div style={{fontSize:13,color:C.txt,marginTop:4}}>{currentPhaseData.desc}</div>
+                </div>
+              </div>
+              <p style={{fontSize:13,color:C.txtL,margin:0,fontStyle:"italic"}}>
+                Your ADHD meds may feel different right now. That's biology, not failure. Track how you feel and share with your doctor.
+              </p>
+            </Card>
+          </div>
+        )}
+        <div>
+          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>Grounding & Support</h3>
+          <Card style={{textAlign:"center"}}>
+            <h4 style={{fontSize:14,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
+            <p style={{fontSize:12,color:C.txtL,margin:"0 0 8px"}}>4 cycles to calm your nervous system</p>
+            <BreathCircle active={breathActive} phase={breathPhase} sec={breathSec}/>
+            {breathActive && <div style={{fontSize:12,color:C.txtM,marginBottom:8}}>Cycle {breathCycles+1} of 4</div>}
+            <Btn v={breathActive?"sec":"acc"} sz="sm" onClick={()=>{setBreathActive(!breathActive);if(!breathActive)setBreathCycles(0);else setBreathPhase("ready")}}>
+              {breathActive?"Stop":"Start Breathing"}
+            </Btn>
+          </Card>
+          {spiral==="spiral" && (
+            <Card style={{background:C.danger+"20",border:`1px solid ${C.danger}40`}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <AlertTriangle size={20} color={C.danger}/>
+                <div>
+                  <div style={{fontWeight:600,color:C.danger,fontSize:14}}>Get Support</div>
+                  <p style={{fontSize:13,color:C.txt,margin:"4px 0 0"}}>If you're spiraling, reach out to someone you trust. It's okay to ask for help.</p>
+                </div>
+              </div>
+            </Card>
+          )}
+        </div>
+        <Card style={{background:C.purpL+"20",border:`1px solid ${C.purpL}60`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+            <FileText size={20} color={C.purp}/>
+            <div style={{fontWeight:600,fontSize:14,color:C.purp}}>For Your Doctor</div>
+          </div>
+          <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:"8px 0"}}>
+            I've identified patterns in how your ADHD, meds, sleep, and cycle interact. These can help your doctor fine-tune your plan.
+          </p>
+          <Btn v="sec" sz="sm" onClick={()=>setTab("insights")} style={{width:"100%",marginTop:8}}>View Full Report</Btn>
+        </Card>
+        <Card style={{background:C.purpL+"15",border:`1px solid ${C.purpL}`}}>
+          <div style={{display:"flex",gap:10}}><Heart size={20} color={C.purp} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.purp}}>Remember</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"6px 0 0"}}>Your brain is different, not broken. These patterns aren't flaws — they're data points that help us support you better.</p></div></div>
+        </Card>
+      </div>
+    );
+  };
+
 
   // ═════════════════════════════════════════════════════════════════
   // CHECK-IN
@@ -885,7 +1192,7 @@ export default function ADHDCompanion() {
       {/* Sub-nav */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:20}}>
         {[
-          {id:"coach",label:"Grounding",icon:Shield,color:C.acc},
+          {id:"coach",label:"Grounding Exercises",icon:Shield,color:C.acc},
           {id:"timer",label:"Focus Timer",icon:Timer,color:C.purp},
           {id:"paralysis",label:"Task Helper",icon:Rocket,color:C.pri},
           {id:"dopamine",label:"Dopamine Menu",icon:Sparkles,color:C.warn},
@@ -1429,6 +1736,7 @@ export default function ADHDCompanion() {
 
       <div style={{padding:"20px 16px 100px"}}>
         {tab==="home"&&renderHome()}
+        {tab==="coach"&&renderCoach()}
         {tab==="checkin"&&renderCheckin()}
         {tab==="journal"&&renderJournal()}
         {tab==="meds"&&renderMeds()}
