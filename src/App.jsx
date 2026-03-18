@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, CartesianGrid } from "recharts";
 import { Heart, Brain, Zap, Sun, Moon, Cloud, CloudRain, AlertTriangle, Check, Plus, X, ChevronLeft, ChevronRight, Pill, Wind, Clock, Bell, TrendingDown, TrendingUp, Activity, BookOpen, Smile, Trash2, Star, Shield, Eye, Target, Volume2, VolumeX, Feather, MoreHorizontal, Play, Pause, RotateCcw, Sparkles, Trophy, FileText, ChevronDown, ChevronUp, Bed, Droplets, Coffee, ListChecks, Rocket, Timer, MessageCircle } from "lucide-react";
 
-// ─── Theme ──────────────────────────────────────────────────────────
+// ─── Theme ──────────────────────────────────────────────────────────────────────
 const C = {
   bg: "#FFF8F0", card: "#FFFFFF", cardAlt: "#FFF5EB",
   pri: "#E8985E", priL: "#F5C8A0", priD: "#C47A3F",
@@ -13,7 +13,7 @@ const C = {
   rose: "#D4736A", roseL: "#F0B5AF",
 };
 
-// ─── Constants ──────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────────
 const MOODS = [
   { emoji: "😊", label: "Great", value: 5, color: "#7EB5A6" },
   { emoji: "🙂", label: "Good", value: 4, color: "#A8D0C4" },
@@ -43,8 +43,7 @@ const EMOTIONS = [
   "Overwhelmed","Restless","Frustrated","Anxious","Impulsive","Hyperfocused","Creative",
   "Scattered","Calm","Motivated","Paralysed","Irritable","Hopeful","Exhausted","Euphoric",
   "Rejected","Bored","Determined","Confused","Grateful",
-];
-const SIDE_EFFECTS = [
+];const SIDE_EFFECTS = [
   "Dry mouth","Loss of appetite","Insomnia","Headache","Nausea","Jitteriness","Mood swings",
   "Fatigue","Irritability","Heart racing","Stomach pain","Dizziness","Brain fog clearing","Improved focus",
 ];
@@ -91,7 +90,7 @@ const GROUNDING = [
 ];
 const COACHING = {
   spiral: [
-    "Hey Georgia, things have been tough lately. That's okay — ADHD brains have waves, and this is just one.",
+    "Things have been tough lately. That's okay — ADHD brains have waves, and this is just one.",
     "You've gotten through hard patches before. This feeling is temporary, even when it doesn't feel like it.",
     "Your worth isn't measured by your productivity. You matter just as you are, right now.",
   ],
@@ -118,9 +117,9 @@ const DEFAULT_DOPAMINE = [
   { id:"d9", text:"Tidy one small surface", category:"movement" },
   { id:"d10", text:"Write 3 things you're grateful for", category:"reflection" },
 ];
-const DOPAMINE_CATS = { movement:"🏃", connection:"💬", sensory:"✨", rest:"🛋️", creative:"🎨", reflection:"📝", other:"💫" };
+const DOPAMINE_CATS = { movement:"🏃", connection:"💬", sensory:"✨", rest:"🛏️", creative:"🎨", reflection:"📝", other:"💭" };
 
-// ─── Helpers ────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────────
 const dateKey = (d = new Date()) => d.toISOString().split("T")[0];
 const timeStr = () => new Date().toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"});
 const dayName = s => new Date(s).toLocaleDateString("en-AU",{weekday:"short"});
@@ -141,7 +140,7 @@ function detectSpiral(entries) {
   return null;
 }
 
-// ─── UI Primitives ──────────────────────────────────────────────────
+// ─── UI Primitives ──────────────────────────────────────────────────────────────
 const Card = ({children, style, onClick}) => (
   <div onClick={onClick} style={{background:C.card,borderRadius:20,padding:20,marginBottom:16,boxShadow:"0 2px 12px rgba(74,55,40,0.06)",border:`1px solid ${C.brd}`,cursor:onClick?"pointer":"default",transition:"transform 0.2s",...style}}>
     {children}
@@ -172,7 +171,7 @@ const TabBar = ({tabs,active,onChange}) => (
   </div>
 );
 
-// ─── Breathing Circle ───────────────────────────────────────────────
+// ─── Breathing Circle ────────────────────────────────────────────────────────────
 const BreathCircle = ({active,phase,sec}) => {
   const s = phase==="in"||phase==="hold-in"?1.4:phase==="out"||phase==="hold-out"?0.8:1;
   const l = {"in":"Breathe In","hold-in":"Hold","out":"Breathe Out","hold-out":"Hold","ready":"Tap Start"};
@@ -188,9 +187,9 @@ const BreathCircle = ({active,phase,sec}) => {
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════════
 // MAIN APP
-// ═══════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════════
 export default function ADHDCompanion() {
   const [tab, setTab] = useState("home");
   const [entries, setEntries] = useState([]);
@@ -200,6 +199,18 @@ export default function ADHDCompanion() {
   const [wins, setWins] = useState([]);
   const [dopamineMenu, setDopamineMenu] = useState(DEFAULT_DOPAMINE);
   const [notif, setNotif] = useState(null);
+
+  // User name (persisted to localStorage)
+  const [userName, setUserName] = useState(()=>{try{return localStorage.getItem("hb_name")||""}catch{return ""}});
+  const [showNamePrompt, setShowNamePrompt] = useState(!userName);
+  const [nameInput, setNameInput] = useState("");
+  const saveName = () => {
+    const n = nameInput.trim();
+    if(!n) return;
+    setUserName(n);
+    setShowNamePrompt(false);
+    try{localStorage.setItem("hb_name",n)}catch{}
+  };
 
   // Check-in
   const [ci, setCi] = useState({mood:null,energy:null,focus:null,emotions:[],note:"",medTaken:{},sideEffects:[],cycle:null,cycleDay:"",cycleSymptoms:[],sleepHours:"",sleepQuality:null,sleepNotes:""});
@@ -249,7 +260,7 @@ export default function ADHDCompanion() {
   const [paraStep, setParaStep] = useState(0);
   const [paraStarted, setParaStarted] = useState(false);
 
-  // ─── Sample Data ──────────────────────────────────────────────────
+  // ─── Sample Data ────────────────────────────────────────────────────────────
   useEffect(() => {
     const sample = [];
     recentDays(14).forEach((day,i) => {
@@ -258,7 +269,7 @@ export default function ADHDCompanion() {
         mood:Math.max(1,Math.min(5,Math.round(3+Math.sin(i*0.8)*2))),
         energy:Math.max(1,Math.min(5,Math.round(3+Math.cos(i*0.6)*1.5))),
         focus:Math.max(1,Math.min(5,Math.round(3+Math.sin(i*0.4)*1.5))),
-        emotions:[EMOTIONS[i%EMOTIONS.length],EMOTIONS[(i+5)%EMOTIONS.length]],
+        emotions:(()=>{const m=Math.max(1,Math.min(5,Math.round(3+Math.sin(i*0.8)*2)));const pos=["Calm","Motivated","Hopeful","Creative","Determined","Grateful","Hyperfocused"];const mid=["Restless","Scattered","Bored","Confused"];const neg=["Overwhelmed","Frustrated","Anxious","Exhausted","Irritable","Paralysed","Rejected"];if(m>=4)return[pos[i%pos.length],pos[(i+2)%pos.length]];if(m===3)return[mid[i%mid.length],pos[i%pos.length]];return[neg[i%neg.length],neg[(i+3)%neg.length]];})(),
         note:"",medTaken:{},sideEffects:[],cycle:CYCLE_PHASES[i%5].id,cycleDay:"",cycleSymptoms:[],
         sleepHours:String(Math.round(5+Math.random()*4)),sleepQuality:Math.max(1,Math.min(5,Math.round(3+Math.sin(i*0.5)*1.5))),sleepNotes:"",
       });
@@ -332,7 +343,7 @@ export default function ADHDCompanion() {
 
   const notify = (msg,type="info") => { setNotif({msg,type}); setTimeout(()=>setNotif(null),5000); };
 
-  // ─── Actions ──────────────────────────────────────────────────────
+  // ─── Actions ────────────────────────────────────────────────────────────────
   const submitCheckin = () => {
     if(!ci.mood){notify("Select a mood first","warn");return;}
     setEntries(p=>[...p,{id:Date.now().toString(),date:dateKey(),time:timeStr(),...ci}]);
@@ -394,7 +405,7 @@ export default function ADHDCompanion() {
     setParaStarted(true);
   };
 
-  // ─── Computed Data ────────────────────────────────────────────────
+  // ─── Computed Data ──────────────────────────────────────────────────────────
   const days14 = recentDays(14);
   const chartData = days14.map(d => {
     const de = entries.filter(e=>e.date===d);
@@ -415,11 +426,11 @@ export default function ADHDCompanion() {
     return {date:fmtDate(d),day:dayName(d),hours:hrs.length>0?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length*10)/10:null};
   });
 
-
-  // Pattern Reflection Engine
+  // ─── Pattern Reflection Engine ──────────────────────────────────────────────
   const generateInsights = () => {
     const insights = [];
     if(entries.length < 3) return insights;
+
     // Day-of-week patterns
     const moodByDow = {};
     entries.forEach(e => {
@@ -433,23 +444,219 @@ export default function ADHDCompanion() {
         const avg = moods.reduce((a,b)=>a+b,0)/moods.length;
         const overall = entries.filter(e=>e.mood).map(e=>e.mood).reduce((a,b)=>a+b,0)/entries.filter(e=>e.mood).length;
         if(avg < overall - 0.5) {
-          insights.push({type:"dow",icon:Cloud,title:`Your week & ${dowNames[dow]}`,message:`Your mood tends to dip on ${dowNames[dow]}s (avg ${avg.toFixed(1)} vs ${overall.toFixed(1)} overall). What's draining about that day?`,color:C.warn});
+          insights.push({
+            type:"dow",
+            icon:Cloud,
+            title:`Your week & ${dowNames[dow]}`,
+            message:`Your mood tends to dip on ${dowNames[dow]}s (avg ${avg.toFixed(1)} vs ${overall.toFixed(1)} overall). What's draining about that day? What could help?`,
+            color:C.warn
+          });
         }
       }
     }
+
     // Sleep-mood correlation
     const sleepMoods = entries.filter(e=>e.sleepHours&&e.mood).map(e=>({sleep:parseFloat(e.sleepHours),mood:e.mood}));
     if(sleepMoods.length >= 5) {
       const lowSleep = sleepMoods.filter(s=>s.sleep<6);
       const goodSleep = sleepMoods.filter(s=>s.sleep>=7);
       if(lowSleep.length>=3 && goodSleep.length>=3) {
-        const avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
-        const avgGood = goodSleep.reduce((a,e)=>a+e.mood,0)/goodSleep.length;
-        if(avgGood > avgLow + 0.5) {
-          insights.push({type:"sleep",icon:Bed,title:"Sleep is your superpower",message:`When you sleep under 6hrs, mood averages ${avgLow.toFixed(1)}. With 7+, it's ${avgGood.toFixed(1)}. Even one extra hour matters.`,color:C.acc});
+        const lowSleepMood = lowSleep.reduce((a,b)=>a+b.mood,0)/lowSleep.length;
+        const goodSleepMood = goodSleep.reduce((a,b)=>a+b.mood,0)/goodSleep.length;
+        if(goodSleepMood > lowSleepMood + 0.5) {
+          insights.push({
+            type:"sleep",
+            icon:Bed,
+            title:"Sleep = Your Secret Weapon",
+            message:`When you get 7+ hours, your mood averages ${goodSleepMood.toFixed(1)}. When you get <6, it drops to ${lowSleepMood.toFixed(1)}. That's your proof: sleep isn't lazy, it's medicine.`,
+            color:C.acc
+          });
         }
       }
     }
+
+    // Cycle-mood correlation (if data exists)
+    const cycleEntriesWithMood = entries.filter(e=>e.cycle&&e.mood);
+    if(cycleEntriesWithMood.length >= 5) {
+      const cycleMood = {};
+      cycleEntriesWithMood.forEach(e => {
+        if(!cycleMood[e.cycle]) cycleMood[e.cycle] = [];
+        cycleMood[e.cycle].push(e.mood);
+      });
+      const worstCycle = Object.entries(cycleMood).sort((a,b)=>{
+        const avgA = a[1].reduce((x,y)=>x+y,0)/a[1].length;
+        const avgB = b[1].reduce((x,y)=>x+y,0)/b[1].length;
+        return avgA - avgB;
+      })[0];
+      if(worstCycle) {
+        const cp = CYCLE_PHASES.find(p=>p.id===worstCycle[0]);
+        if(cp) {
+          const avg = worstCycle[1].reduce((a,b)=>a+b,0)/worstCycle[1].length;
+          insights.push({
+            type:"cycle",
+            icon:Cloud,
+            title:`${cp.label} Pattern`,
+            message:`${cp.desc} Your mood data shows a dip here (avg ${avg.toFixed(1)}). This is REAL, not in your head.`,
+            color:C.warn
+          });
+        }
+      }
+    }
+
+    // Medication-emotion correlation
+    if(entries.some(e=>Object.keys(e.medTaken||{}).length>0)) {
+      const medsWithEmotions = entries.filter(e=>Object.keys(e.medTaken||{}).length>0);
+      if(medsWithEmotions.length >= 5) {
+        const commonEmotions = {};
+        medsWithEmotions.forEach(e => (e.emotions||[]).forEach(em => commonEmotions[em] = (commonEmotions[em]||0) + 1));
+        const topEm = Object.entries(commonEmotions).sort((a,b)=>b[1]-a[1])[0];
+        if(topEm && topEm[1] >= 3) {
+          insights.push({
+            type:"med",
+            icon:Pill,
+            title:"On Your Meds, You Often Feel...",
+            message:`When you take your meds, "${topEm[0]}" shows up ${topEm[1]} times. What patterns do you notice?`,
+            color:C.pri
+          });
+        }
+      }
+    }
+
+    // Journaling-mood correlation
+    if(journalEntries.length >= 5) {
+      const journalDays = new Set(journalEntries.map(j=>j.date));
+      const journalEntriesMood = entries.filter(e=>journalDays.has(e.date)&&e.mood);
+      if(journalEntriesMood.length >= 3) {
+        const journalMoodAvg = journalEntriesMood.reduce((a,b)=>a+b.mood,0)/journalEntriesMood.length;
+        const nonJournalMoodAvg = entries.filter(e=>!journalDays.has(e.date)&&e.mood).length >= 3
+          ? entries.filter(e=>!journalDays.has(e.date)&&e.mood).reduce((a,b)=>a+b.mood,0) / entries.filter(e=>!journalDays.has(e.date)&&e.mood).length
+          : null;
+        if(nonJournalMoodAvg && journalMoodAvg > nonJournalMoodAvg + 0.3) {
+          insights.push({
+            type:"journal",
+            icon:BookOpen,
+            title:"Writing Shifts Your Mood",
+            message:`On days you journal, your mood is ${journalMoodAvg.toFixed(1)}. On other days, ${nonJournalMoodAvg.toFixed(1)}. That's not a coincidence.`,
+            color:C.accD
+          });
+        }
+      }
+    }
+
+    return insights;
+  };
+
+  const insights = generateInsights();
+
+  // ─── Home Screen ───────────────────────────────────────────────────
+  if(tab === "home") return (
+    <div style={{paddingBottom:90}}>
+      {notif && <div style={{position:"fixed",top:16,left:16,right:16,background:notif.type==="warn"?C.warn:notif.type==="success"?C.acc:C.pri,color:"#fff",padding:14,borderRadius:12,zIndex:1000,fontSize:14,fontWeight:500}}>{notif.msg}</div>}
+      {showNamePrompt && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
+        <div style={{background:C.card,borderRadius:24,padding:28,maxWidth:300}}>
+          <div style={{fontSize:18,fontWeight:700,marginBottom:12,color:C.txt}}>Welcome to ADHD Companion</div>
+          <div style={{fontSize:14,color:C.txtL,marginBottom:20}}>What's your name?</div>
+          <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyPress={e=>e.key==="Enter"&&saveName()} placeholder="Tell me your name" style={{width:"100%",padding:10,border:`1px solid ${C.brd}`,borderRadius:10,marginBottom:16,fontSize:14,boxSizing:"border-box"}}/>
+          <Btn onClick={saveName}>Let's go!</Btn>
+        </div>
+      </div>}
+      <div style={{background:`linear-gradient(135deg,${C.pri},${C.priL})`,padding:20,color:"#fff"}}>
+        <div style={{fontSize:22,fontWeight:700}}>Hey {userName || "there"}! 👋</div>
+        <div style={{fontSize:14,opacity:0.9,marginTop:6}}>{new Date().toLocaleDateString("en-AU",{weekday:"long",month:"long",day:"numeric"})}</div>
+      </div>
+      <div style={{padding:20}}>
+        <div style={{display:"flex",gap:10,marginBottom:20}}>
+          <Card style={{flex:1,marginBottom:0}}>
+            <div style={{fontSize:12,color:C.txtL,fontWeight:500}}>Your 7-day avg mood</div>
+            <div style={{fontSize:26,fontWeight:700,color:C.pri,marginTop:4}}>{avgMood7}</div>
+          </Card>
+          <Card style={{flex:1,marginBottom:0}}>
+            <div style={{fontSize:12,color:C.txtL,fontWeight:500}}>Check-in streak</div>
+            <div style={{fontSize:26,fontWeight:700,color:C.acc,marginTop:4}}>{streak} 🔥</div>
+          </Card>
+        </div>
+
+        {todayE.length === 0 && <Card onClick={()=>setTab("checkin")} style={{background:`linear-gradient(135deg,${C.priL},${C.cardAlt})`,cursor:"pointer",marginBottom:20}}>
+          <div style={{fontSize:15,fontWeight:600,color:C.priD}}>👉 Tap to check in today</div>
+          <div style={{fontSize:13,color:C.txtL,marginTop:6}}>How are you feeling right now?</div>
+        </Card>}
+
+        {spiral === "spiral" && <Card style={{border:`2px solid ${C.danger}`,background:C.dangerL+"40"}}>
+          <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+            <AlertTriangle color={C.danger} size={20} style={{flexShrink:0,marginTop:2}}/>
+            <div>
+              <div style={{fontSize:14,fontWeight:600,color:C.danger}}>I've noticed a pattern</div>
+              <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{pick(COACHING.spiral)}</div>
+              <div style={{display:"flex",gap:8,marginTop:12}}>
+                <Btn v="danger" sz="sm" onClick={()=>setTab("toolkit")}>Try a tool</Btn>
+                <Btn v="ghost" sz="sm" onClick={()=>setTab("journal")}>Write it out</Btn>
+              </div>
+            </div>
+          </div>
+        </Card>}
+
+        {spiral === "low" && <Card style={{border:`2px solid ${C.warn}`,background:C.warn+"20"}}>
+          <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+            <Cloud color={C.warn} size={20} style={{flexShrink:0,marginTop:2}}/>
+            <div>
+              <div style={{fontSize:14,fontWeight:600,color:C.warn}}>Your energy is low</div>
+              <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{pick(COACHING.low)}</div>
+              <div style={{display:"flex",gap:8,marginTop:12}}>
+                <Btn v="ghost" sz="sm" onClick={()=>setTab("dopamine")}>Dopamine menu</Btn>
+              </div>
+            </div>
+          </div>
+        </Card>}
+
+        <div style={{fontSize:13,fontWeight:700,color:C.txt,marginTop:28,marginBottom:12}}>INSIGHTS</div>
+        {insights.length === 0 ? (
+          <Card style={{textAlign:"center",color:C.txtL}}>
+            <div style={{fontSize:13}}>Keep checking in. Patterns emerge after ~5 entries.</div>
+          </Card>
+        ) : insights.map((ins,i) => (
+          <Card key={i} style={{border:`1px solid ${ins.color}`,background:ins.color+"12"}}>
+            <div style={{display:"flex",gap:10}}>
+              <ins.icon color={ins.color} size={20} style={{flexShrink:0,marginTop:2}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:ins.color}}>{ins.title}</div>
+                <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{ins.message}</div>
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        <div style={{fontSize:13,fontWeight:700,color:C.txt,marginTop:28,marginBottom:12}}>RECENT ENTRIES</div>
+        {entries.slice(-3).reverse().map(e => (
+          <Card key={e.id}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:600,color:C.txt}}>{fmtDate(e.date)} • {e.time}</div>
+                <div style={{fontSize:12,color:C.txtL,marginTop:2}}>Mood: {e.mood ? MOODS.find(m=>m.value===e.mood)?.emoji : "—"} Energy: {e.energy ? ENERGY.find(en=>en.value===e.energy)?.label : "—"}</div>
+              </div>
+            </div>
+            {e.emotions?.length > 0 && <div style={{marginTop:10}}>
+              <div style={{fontSize:12,color:C.txtL,fontWeight:500,marginBottom:6}}>Feeling: {e.emotions.join(", ")}</div>
+            </div>}
+            {e.sleepHours && <div style={{fontSize:12,color:C.txtL,marginTop:6}}>Sleep: {e.sleepHours}h</div>}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
+        const avgGood = goodSleep.reduce((a,e)=>a+e.mood,0)/goodSleep.length;
+        if(avgGood > avgLow + 0.5) {
+          insights.push({
+            type:"sleep",
+            icon:Bed,
+            title:"Sleep is your superpower",
+            message:`When you sleep under 6 hours, your mood averages ${avgLow.toFixed(1)}. When you get 7+, it jumps to ${avgGood.toFixed(1)}. Even one extra hour matters.`,
+            color:C.acc
+          });
+        }
+      }
+    }
+
     // Emotion frequency changes
     const recent7e = entries.slice(-7).map(e=>e.emotions||[]).flat();
     const prev7e = entries.slice(-14,-7).map(e=>e.emotions||[]).flat();
@@ -460,12 +667,19 @@ export default function ADHDCompanion() {
       for(const [em, freq] of Object.entries(freqRecent)) {
         const prevFreq = freqPrev[em] || 0;
         if(freq >= 4 && freq > prevFreq * 1.5) {
-          insights.push({type:"emotion",icon:Smile,title:`Feeling "${em}" more`,message:`You logged "${em}" ${freq} times this week vs ${prevFreq} before. What shifted?`,color:C.pri});
-          break;
+          insights.push({
+            type:"emotion",
+            icon:Smile,
+            title:`You've been feeling "${em}" more`,
+            message:`You logged "${em}" ${freq} times this week vs ${prevFreq} the week before. What's shifted? Is there something you need to process or address?`,
+            color:C.pri
+          });
+          break; // Just one emotion change per cycle
         }
       }
     }
-    // Medication + mood
+
+    // Medication + mood correlation
     const medTakenEntries = entries.filter(e=>Object.values(e.medTaken||{}).some(x=>x===true)&&e.mood);
     const medSkippedEntries = entries.filter(e=>!Object.values(e.medTaken||{}).some(x=>x===true)&&e.mood);
     if(medTakenEntries.length >= 3 && medSkippedEntries.length >= 3) {
@@ -473,9 +687,16 @@ export default function ADHDCompanion() {
       const avgSkipped = medSkippedEntries.reduce((a,e)=>a+e.mood,0)/medSkippedEntries.length;
       if(avgTaken > avgSkipped + 0.4) {
         const medName = meds[0]?.name || "your med";
-        insights.push({type:"med",icon:Pill,title:"Your medication helps",message:`Days you take ${medName}, mood averages ${avgTaken.toFixed(1)}. Days you skip, ${avgSkipped.toFixed(1)}. Worth noting for your doctor.`,color:C.acc});
+        insights.push({
+          type:"med",
+          icon:Pill,
+          title:"Your medication seems to help",
+          message:`Days you take ${medName}, your mood averages ${avgTaken.toFixed(1)}. Days you skip, it's ${avgSkipped.toFixed(1)}. Worth noting for your doctor.`,
+          color:C.acc
+        });
       }
     }
+
     // Energy patterns
     const energyByTime = {};
     entries.forEach(e => {
@@ -489,27 +710,57 @@ export default function ADHDCompanion() {
         const avg = energies.reduce((a,b)=>a+b,0)/energies.length;
         const overall = entries.filter(e=>e.energy).map(e=>e.energy).reduce((a,b)=>a+b,0)/entries.filter(e=>e.energy).length;
         if(avg > overall + 0.5) {
-          insights.push({type:"energy",icon:Zap,title:`Energy peak: ${period}`,message:`Your energy peaks in the ${period}. Schedule hard tasks then. Work WITH your rhythm.`,color:C.warn});
+          insights.push({
+            type:"energy",
+            icon:Zap,
+            title:`Energy peak: ${period}`,
+            message:`Your energy peaks in the ${period} — try scheduling your hardest tasks then. Work WITH your rhythm, not against it.`,
+            color:C.warn
+          });
           break;
         }
       }
     }
+
     // Win streaks
     const thisWeekWins = wins.filter(w=>new Date(w.date)>new Date(Date.now()-7*24*60*60*1000)).length;
     const lastWeekWins = wins.filter(w=>new Date(w.date)>new Date(Date.now()-14*24*60*60*1000)&&new Date(w.date)<=new Date(Date.now()-7*24*60*60*1000)).length;
     if(thisWeekWins >= 3 && thisWeekWins > lastWeekWins) {
-      insights.push({type:"wins",icon:Trophy,title:"You're on a roll!",message:`You logged ${thisWeekWins} wins this week vs ${lastWeekWins} last week. That's you showing up.`,color:C.acc});
+      insights.push({
+        type:"wins",
+        icon:Trophy,
+        title:`You're on a roll!`,
+        message:`You logged ${thisWeekWins} wins this week — more than last week's ${lastWeekWins}. That's not luck, that's you showing up for yourself.`,
+        color:C.acc
+      });
     }
+
     // Focus trends
     const focusRecent = entries.slice(-7).filter(e=>e.focus).map(e=>e.focus);
     const focusPrev = entries.slice(-14,-7).filter(e=>e.focus).map(e=>e.focus);
     if(focusRecent.length >= 3 && focusPrev.length >= 3) {
-      const rA = focusRecent.reduce((a,b)=>a+b,0)/focusRecent.length;
-      const pA = focusPrev.reduce((a,b)=>a+b,0)/focusPrev.length;
-      if(rA > pA + 0.5) insights.push({type:"focus",icon:Target,title:"Focus improving",message:`This week focus averaged ${rA.toFixed(1)} vs ${pA.toFixed(1)} last week. Keep it up.`,color:C.acc});
-      else if(rA < pA - 0.5) insights.push({type:"focus",icon:Target,title:"Focus slipping",message:`Focus dropped from ${pA.toFixed(1)} to ${rA.toFixed(1)}. Sleep? Stress? Meds?`,color:C.warn});
+      const recentAvg = focusRecent.reduce((a,b)=>a+b,0)/focusRecent.length;
+      const prevAvg = focusPrev.reduce((a,b)=>a+b,0)/focusPrev.length;
+      if(recentAvg > prevAvg + 0.5) {
+        insights.push({
+          type:"focus",
+          icon:Target,
+          title:"Your focus is improving",
+          message:`This week your focus averaged ${recentAvg.toFixed(1)} vs ${prevAvg.toFixed(1)} last week. Whatever you're doing, keep it up.`,
+          color:C.acc
+        });
+      } else if(recentAvg < prevAvg - 0.5) {
+        insights.push({
+          type:"focus",
+          icon:Target,
+          title:"Focus is slipping",
+          message:`Your focus dropped from ${prevAvg.toFixed(1)} last week to ${recentAvg.toFixed(1)} this week. What's changed? Sleep? Stress? Meds?`,
+          color:C.warn
+        });
+      }
     }
-    // Cycle-mood connection
+
+    // Cycle-mood connection (if cycle data exists)
     const hasCycle = entries.some(e=>e.cycle&&e.cycle!=="na"&&e.cycle!=="unsure");
     if(hasCycle) {
       const cyclePhases = {};
@@ -520,36 +771,77 @@ export default function ADHDCompanion() {
       const phaseNames = {menstrual:"Period",follicular:"Follicular",ovulation:"Ovulation",luteal_early:"Early Luteal",luteal_late:"Late Luteal"};
       const phases = Object.entries(cyclePhases).sort((a,b)=>b[1].length-a[1].length);
       if(phases.length >= 2) {
-        const [p1, m1] = phases[0], [p2, m2] = phases[1];
-        if(m1.length >= 3 && m2.length >= 3) {
-          const a1 = m1.reduce((a,b)=>a+b,0)/m1.length, a2 = m2.reduce((a,b)=>a+b,0)/m2.length;
-          if(Math.abs(a1-a2) > 0.5) insights.push({type:"cycle",icon:Heart,title:"Cycle & mood connected",message:`During ${phaseNames[p1]||p1}, mood averages ${a1.toFixed(1)}. During ${phaseNames[p2]||p2}, ${a2.toFixed(1)}. Share with your doctor.`,color:C.rose});
+        const [phase1, moods1] = phases[0];
+        const [phase2, moods2] = phases[1];
+        if(moods1.length >= 3 && moods2.length >= 3) {
+          const avg1 = moods1.reduce((a,b)=>a+b,0)/moods1.length;
+          const avg2 = moods2.reduce((a,b)=>a+b,0)/moods2.length;
+          if(Math.abs(avg1 - avg2) > 0.5) {
+            insights.push({
+              type:"cycle",
+              icon:Heart,
+              title:"Your cycle & mood are connected",
+              message:`During your ${phaseNames[phase1]||phase1}, your mood averages ${avg1.toFixed(1)}. During ${phaseNames[phase2]||phase2}, it's ${avg2.toFixed(1)}. This is a pattern worth sharing with your doctor.`,
+              color:C.rose
+            });
+          }
         }
       }
     }
+
     // Journaling impact
     const journalDates = new Set(journalEntries.map(j=>j.date));
-    const jM = entries.filter(e=>journalDates.has(e.date)&&e.mood).map(e=>e.mood);
-    const njM = entries.filter(e=>!journalDates.has(e.date)&&e.mood).map(e=>e.mood);
-    if(jM.length >= 3 && njM.length >= 3) {
-      const aJ = jM.reduce((a,b)=>a+b,0)/jM.length, aN = njM.reduce((a,b)=>a+b,0)/njM.length;
-      if(aJ > aN + 0.4) insights.push({type:"journal",icon:Feather,title:"Writing helps your mood",message:`On journal days, mood averages ${aJ.toFixed(1)} vs ${aN.toFixed(1)}. Writing is processing.`,color:C.acc});
+    const journalMoods = entries.filter(e=>journalDates.has(e.date)&&e.mood).map(e=>e.mood);
+    const noJournalMoods = entries.filter(e=>!journalDates.has(e.date)&&e.mood).map(e=>e.mood);
+    if(journalMoods.length >= 3 && noJournalMoods.length >= 3) {
+      const avgJournal = journalMoods.reduce((a,b)=>a+b,0)/journalMoods.length;
+      const avgNoJournal = noJournalMoods.reduce((a,b)=>a+b,0)/noJournalMoods.length;
+      if(avgJournal > avgNoJournal + 0.4) {
+        insights.push({
+          type:"journal",
+          icon:Feather,
+          title:"Writing helps your mood",
+          message:`On days you journal, your mood averages ${avgJournal.toFixed(1)} vs ${avgNoJournal.toFixed(1)} on days you don't. Writing is processing. Keep going.`,
+          color:C.acc
+        });
+      }
     }
+
     // Spiral warning
-    const r3 = entries.slice(-3).filter(e=>e.mood).map(e=>e.mood);
-    if(r3.length===3 && r3.every((v,i)=>i===0||v<=r3[i-1]) && r3[r3.length-1]<=2) {
-      insights.push({type:"spiral",icon:AlertTriangle,title:"I'm noticing a pattern",message:"3+ days of declining mood. This is a wave, not a cliff. Try a grounding exercise.",color:C.danger});
+    const recent3 = entries.slice(-3).filter(e=>e.mood).map(e=>e.mood);
+    if(recent3.length === 3 && recent3.every((v,i)=>i===0||v<=recent3[i-1]) && recent3[recent3.length-1] <= 2) {
+      insights.push({
+        type:"spiral",
+        icon:AlertTriangle,
+        title:"I'm noticing a pattern",
+        message:`I've noticed 3+ days of declining mood. This is a wave, not a cliff — and waves pass. Try a grounding exercise. You'll get through this.`,
+        color:C.danger
+      });
     }
+
     // Consecutive low days
-    const rm = entries.slice(-14).filter(e=>e.mood).map(e=>e.mood);
-    let ls = 0; for(let i=rm.length-1;i>=0;i--){if(rm[i]<=3)ls++;else break;}
-    if(ls>=5&&ls<=10) insights.push({type:"lowstreak",icon:Cloud,title:`${ls} rough days`,message:`${ls} days below a 3. Rough patches happen. Be extra gentle with yourself.`,color:C.warn});
-    return insights.slice(0, 8);
+    const recentMoods = entries.slice(-14).filter(e=>e.mood).map(e=>e.mood);
+    let lowStreak = 0;
+    for(let i = recentMoods.length-1; i >= 0; i--) {
+      if(recentMoods[i] <= 3) lowStreak++;
+      else break;
+    }
+    if(lowStreak >= 5 && lowStreak <= 10) {
+      insights.push({
+        type:"lowstreak",
+        icon:Cloud,
+        title:`${lowStreak} days of rough patches`,
+        message:`It's been ${lowStreak} days since you rated above a 3. That's okay — rough patches happen. Be extra gentle with yourself. You're doing the hard work of showing up.`,
+        color:C.warn
+      });
+    }
+
+    return insights.slice(0, 8); // Return up to 8 insights
   };
 
   const insights = generateInsights();
 
-  // ─── Tabs Config ──────────────────────────────────────────────────
+  // ─── Tabs Config ──────────────────────────────────────────────────────────
   const tabs = [
     {id:"home",icon:Heart,label:"Home"},
     {id:"coach",icon:MessageCircle,label:"Coach"},
@@ -561,15 +853,15 @@ export default function ADHDCompanion() {
     {id:"reminders",icon:Bell,label:"Reminders"},
   ];
 
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // HOME
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderHome = () => (
     <div>
       <div style={{marginBottom:24}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           <img src="/logo.svg" alt="Hummingbird" style={{width:38,height:38}} />
-          <h1 style={{fontSize:26,fontWeight:700,color:C.txt,margin:0}}>Hummingbird</h1>
+          <h1 style={{fontSize:26,fontWeight:700,color:C.txt,margin:0}}>{userName ? `Hey ${userName}` : "Hummingbird"}</h1>
         </div>
         <p style={{color:C.txtL,marginTop:4,fontSize:15,lineHeight:1.5}}>
           {spiral==="spiral" ? "I can see things have been tough. You're not alone — want to try a grounding exercise?"
@@ -656,6 +948,15 @@ export default function ADHDCompanion() {
         </Card>
       )}
 
+      {entries.slice(-3).reverse().map(e => (
+        <Card key={e.id} style={{padding:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><span style={{fontSize:22,marginRight:8}}>{MOODS[5-e.mood]?.emoji}</span><span style={{fontSize:14,fontWeight:600,color:C.txt}}>{MOODS[5-e.mood]?.label}</span></div>
+            <div style={{fontSize:12,color:C.txtM}}>{fmtDate(e.date)} {e.time}</div>
+          </div>
+          {e.emotions?.length>0 && <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>{e.emotions.map(em=><span key={em} style={{fontSize:11,padding:"3px 10px",borderRadius:12,background:C.priL+"40",color:C.priD}}>{em}</span>)}</div>}
+        </Card>
+      ))}
 
       {/* Coach's Corner */}
       {insights.length > 0 && (
@@ -677,38 +978,29 @@ export default function ADHDCompanion() {
           ))}
         </div>
       )}
-
-      {entries.slice(-3).reverse().map(e => (
-        <Card key={e.id} style={{padding:16}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><span style={{fontSize:22,marginRight:8}}>{MOODS[5-e.mood]?.emoji}</span><span style={{fontSize:14,fontWeight:600,color:C.txt}}>{MOODS[5-e.mood]?.label}</span></div>
-            <div style={{fontSize:12,color:C.txtM}}>{fmtDate(e.date)} {e.time}</div>
-          </div>
-          {e.emotions?.length>0 && <div style={{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}>{e.emotions.map(em=><span key={em} style={{fontSize:11,padding:"3px 10px",borderRadius:12,background:C.priL+"40",color:C.priD}}>{em}</span>)}</div>}
-        </Card>
-      ))}
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════
-
+  // ═════════════════════════════════════════════════════════════════════════════════
   // COACH
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderCoach = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
     const lastEntry = entries.length > 0 ? entries[entries.length-1] : null;
     const recentEntries = entries.slice(-7);
-    const rAM = recentEntries.filter(e=>e.mood).length > 0 ? recentEntries.filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/recentEntries.filter(e=>e.mood).length : 0;
-    const lAM = entries.slice(-14,-7).filter(e=>e.mood).length > 0 ? entries.slice(-14,-7).filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/entries.slice(-14,-7).filter(e=>e.mood).length : 0;
-    const rAE = recentEntries.filter(e=>e.energy).length > 0 ? recentEntries.filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/recentEntries.filter(e=>e.energy).length : 0;
-    const lAE = entries.slice(-14,-7).filter(e=>e.energy).length > 0 ? entries.slice(-14,-7).filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/entries.slice(-14,-7).filter(e=>e.energy).length : 0;
-    const rAF = recentEntries.filter(e=>e.focus).length > 0 ? recentEntries.filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/recentEntries.filter(e=>e.focus).length : 0;
-    const lAF = entries.slice(-14,-7).filter(e=>e.focus).length > 0 ? entries.slice(-14,-7).filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/entries.slice(-14,-7).filter(e=>e.focus).length : 0;
-    const mC = lAM > 0 ? Math.round((rAM-lAM)/lAM*100) : 0;
-    const eC = lAE > 0 ? Math.round((rAE-lAE)/lAE*100) : 0;
-    const fC = lAF > 0 ? Math.round((rAF-lAF)/lAF*100) : 0;
+    const recentAvgMood = recentEntries.filter(e=>e.mood).length > 0 ? recentEntries.filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/recentEntries.filter(e=>e.mood).length : 0;
+    const lastWeekAvgMood = entries.slice(-14,-7).filter(e=>e.mood).length > 0 ? entries.slice(-14,-7).filter(e=>e.mood).reduce((a,e)=>a+e.mood,0)/entries.slice(-14,-7).filter(e=>e.mood).length : 0;
+    const recentAvgEnergy = recentEntries.filter(e=>e.energy).length > 0 ? recentEntries.filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/recentEntries.filter(e=>e.energy).length : 0;
+    const lastWeekAvgEnergy = entries.slice(-14,-7).filter(e=>e.energy).length > 0 ? entries.slice(-14,-7).filter(e=>e.energy).reduce((a,e)=>a+e.energy,0)/entries.slice(-14,-7).filter(e=>e.energy).length : 0;
+    const recentAvgFocus = recentEntries.filter(e=>e.focus).length > 0 ? recentEntries.filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/recentEntries.filter(e=>e.focus).length : 0;
+    const lastWeekAvgFocus = entries.slice(-14,-7).filter(e=>e.focus).length > 0 ? entries.slice(-14,-7).filter(e=>e.focus).reduce((a,e)=>a+e.focus,0)/entries.slice(-14,-7).filter(e=>e.focus).length : 0;
+    const moodChange = lastWeekAvgMood > 0 ? Math.round((recentAvgMood - lastWeekAvgMood) / lastWeekAvgMood * 100) : 0;
+    const energyChange = lastWeekAvgEnergy > 0 ? Math.round((recentAvgEnergy - lastWeekAvgEnergy) / lastWeekAvgEnergy * 100) : 0;
+    const focusChange = lastWeekAvgFocus > 0 ? Math.round((recentAvgFocus - lastWeekAvgFocus) / lastWeekAvgFocus * 100) : 0;
     const currentPhase = entries.length > 0 ? entries[entries.length-1].cycle : null;
     const currentPhaseData = CYCLE_PHASES.find(p => p.id === currentPhase);
+
     return (
       <div>
         <div style={{marginBottom:24}}>
@@ -720,22 +1012,30 @@ export default function ADHDCompanion() {
             {greeting}! I've been paying attention to your patterns. Here's what I'm noticing.
           </p>
         </div>
+
+        {/* Right Now */}
         <Card style={{background:C.priL+"15",border:`1px solid ${C.priL}`}}>
           <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 8px"}}>Right Now</h3>
           {lastEntry ? (
-            <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>
-              {spiral==="spiral"
-                ? "I see you're in a rough patch. That's a wave, not a failure. This will pass. Try something grounding."
-                : lastEntry.mood>=4
-                ? `You're feeling ${MOODS[5-lastEntry.mood]?.label?.toLowerCase()||"great"}! What's working? Keep doing it.`
-                : lastEntry.mood===3
-                ? "You're in the okay zone. What small thing would help right now?"
-                : "You're struggling. Be gentle. Even checking in is self-care."}
-            </p>
+            <div>
+              <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>
+                {spiral === "spiral"
+                  ? "I see you're in a rough patch. That happens to every ADHD brain — you're not failing, you're just in a wave. This will pass. Want to try something grounding?"
+                  : lastEntry.mood >= 4
+                  ? `You're feeling ${MOODS[5-lastEntry.mood]?.label?.toLowerCase() || "great"}! That's worth noticing. What's working right now? Keep doing that.`
+                  : lastEntry.mood === 3
+                  ? "You're in the okay zone. That's actually a good place to notice what small things would help you feel better."
+                  : "You're struggling — and that's hard. Be gentle with yourself right now. Even showing up to check in is an act of self-care."}
+              </p>
+            </div>
           ) : (
-            <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>No check-in yet today. When you're ready, a quick pulse helps me understand your patterns.</p>
+            <p style={{fontSize:14,color:C.txt,lineHeight:1.6,margin:0}}>
+              I haven't seen a check-in from you yet today. When you're ready, just a quick pulse check helps me understand your patterns better. No pressure — just honest snapshots.
+            </p>
           )}
         </Card>
+
+        {/* What I'm Noticing */}
         {insights.length > 0 && (
           <div>
             <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>What I'm Noticing</h3>
@@ -752,36 +1052,46 @@ export default function ADHDCompanion() {
             ))}
           </div>
         )}
+
+        {/* This Week vs Last Week */}
         {entries.length >= 7 && (
           <div>
             <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>This Week vs Last Week</h3>
             <Card style={{background:C.bg}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
                 <div>
-                  <div style={{fontSize:22,fontWeight:700,color:C.pri}}>{rAM.toFixed(1)}</div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.pri}}>{recentAvgMood.toFixed(1)}</div>
                   <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Mood</div>
-                  <div style={{fontSize:12,fontWeight:600,color:mC>=0?C.acc:C.danger,marginTop:4}}>{mC>=0?<>&#8593; {mC}%</>:<>&#8595; {Math.abs(mC)}%</>}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:moodChange>=0?C.acc:C.danger,marginTop:4}}>
+                    {moodChange>=0?<>↑ {moodChange}%</>:<>↓ {Math.abs(moodChange)}%</>}
+                  </div>
                 </div>
                 <div>
-                  <div style={{fontSize:22,fontWeight:700,color:C.acc}}>{rAE.toFixed(1)}</div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.acc}}>{recentAvgEnergy.toFixed(1)}</div>
                   <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Energy</div>
-                  <div style={{fontSize:12,fontWeight:600,color:eC>=0?C.acc:C.danger,marginTop:4}}>{eC>=0?<>&#8593; {eC}%</>:<>&#8595; {Math.abs(eC)}%</>}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:energyChange>=0?C.acc:C.danger,marginTop:4}}>
+                    {energyChange>=0?<>↑ {energyChange}%</>:<>↓ {Math.abs(energyChange)}%</>}
+                  </div>
                 </div>
                 <div>
-                  <div style={{fontSize:22,fontWeight:700,color:C.purp}}>{rAF.toFixed(1)}</div>
+                  <div style={{fontSize:22,fontWeight:700,color:C.purp}}>{recentAvgFocus.toFixed(1)}</div>
                   <div style={{fontSize:11,color:C.txtM,marginTop:4}}>Avg Focus</div>
-                  <div style={{fontSize:12,fontWeight:600,color:fC>=0?C.acc:C.danger,marginTop:4}}>{fC>=0?<>&#8593; {fC}%</>:<>&#8595; {Math.abs(fC)}%</>}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:focusChange>=0?C.acc:C.danger,marginTop:4}}>
+                    {focusChange>=0?<>↑ {focusChange}%</>:<>↓ {Math.abs(focusChange)}%</>}
+                  </div>
                 </div>
               </div>
               <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:"16px 0 0",paddingTop:12,borderTop:`1px solid ${C.brd}`}}>
-                {eC >= 10 ? `Energy is up ${eC}%! Whatever you're doing, keep it up.`
-                 : mC >= 15 ? "You're on an upswing. Keep riding this wave."
-                 : fC <= -10 ? "Focus is dipping. Check: sleep okay? Meds on track?"
-                 : "You're showing up consistently. That matters."}
+                {energyChange >= 10 ? `Energy is up ${energyChange}% this week — whatever you're doing, keep it up! ⚡`
+                 : moodChange >= 15 ? `You're on an upswing. Keep riding this wave.`
+                 : focusChange <= -10 ? `Focus is dipping. Check in: sleep okay? Meds on track? Stress up?`
+                 : `You're showing up consistently. That's what matters.`}
               </p>
             </Card>
           </div>
         )}
+
+        {/* Cycle Awareness */}
         {currentPhaseData && currentPhaseData.id !== "na" && (
           <div>
             <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>Cycle Awareness</h3>
@@ -794,15 +1104,25 @@ export default function ADHDCompanion() {
                 </div>
               </div>
               <p style={{fontSize:13,color:C.txtL,margin:0,fontStyle:"italic"}}>
-                Your ADHD meds may feel different right now. That's biology, not failure. Track how you feel and share with your doctor.
+                Your ADHD meds may feel different right now. That's biology, not failure. Track how you feel and share this with your doctor.
               </p>
             </Card>
           </div>
         )}
+
+        {/* Grounding & Support */}
         <div>
           <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>Grounding & Support</h3>
           <Card style={{textAlign:"center"}}>
-            <h4 style={{fontSize:14,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
+            <h4 style={{fontSize:14,fontWeight:600,color:C.txt,margin:0}}>Try a grounding exercise</h4>
+            <p style={{fontSize:13,color:C.txtL,margin:"6px 0 12px"}}>When things feel big, ground yourself in the present</p>
+            <Btn v="sec" sz="sm" onClick={()=>{setTab("toolkit");setToolkitSection("coach")}}>Open Toolkit</Btn>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
             <p style={{fontSize:12,color:C.txtL,margin:"0 0 8px"}}>4 cycles to calm your nervous system</p>
             <BreathCircle active={breathActive} phase={breathPhase} sec={breathSec}/>
             {breathActive && <div style={{fontSize:12,color:C.txtM,marginBottom:8}}>Cycle {breathCycles+1} of 4</div>}
@@ -810,39 +1130,41 @@ export default function ADHDCompanion() {
               {breathActive?"Stop":"Start Breathing"}
             </Btn>
           </Card>
-          {spiral==="spiral" && (
+          {spiral === "spiral" && (
             <Card style={{background:C.danger+"20",border:`1px solid ${C.danger}40`}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <AlertTriangle size={20} color={C.danger}/>
                 <div>
                   <div style={{fontWeight:600,color:C.danger,fontSize:14}}>Get Support</div>
-                  <p style={{fontSize:13,color:C.txt,margin:"4px 0 0"}}>If you're spiraling, reach out to someone you trust. It's okay to ask for help.</p>
+                  <p style={{fontSize:13,color:C.txt,margin:"4px 0 0"}}>If you're spiraling, consider reaching out to someone you trust. It's okay to ask for help.</p>
                 </div>
               </div>
             </Card>
           )}
         </div>
+
+        {/* For Your Doctor */}
         <Card style={{background:C.purpL+"20",border:`1px solid ${C.purpL}60`}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
             <FileText size={20} color={C.purp}/>
             <div style={{fontWeight:600,fontSize:14,color:C.purp}}>For Your Doctor</div>
           </div>
           <p style={{fontSize:13,color:C.txt,lineHeight:1.5,margin:"8px 0"}}>
-            I've identified patterns in how your ADHD, meds, sleep, and cycle interact. These can help your doctor fine-tune your plan.
+            I've identified patterns in how your ADHD, meds, sleep, and cycle interact. These insights can help your doctor fine-tune your treatment plan.
           </p>
           <Btn v="sec" sz="sm" onClick={()=>setTab("insights")} style={{width:"100%",marginTop:8}}>View Full Report</Btn>
         </Card>
+
         <Card style={{background:C.purpL+"15",border:`1px solid ${C.purpL}`}}>
-          <div style={{display:"flex",gap:10}}><Heart size={20} color={C.purp} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.purp}}>Remember</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"6px 0 0"}}>Your brain is different, not broken. These patterns aren't flaws — they're data points that help us support you better.</p></div></div>
+          <div style={{display:"flex",gap:10}}><Heart size={20} color={C.purp} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.purp}}>Remember</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"6px 0 0"}}>Your brain is different, not broken. These patterns aren't character flaws — they're data points that help us understand how to support you better.</p></div></div>
         </Card>
       </div>
     );
   };
 
-
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // CHECK-IN
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderCheckin = () => (
     <div>
       <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 4px"}}>Check In</h2>
@@ -977,10 +1299,9 @@ export default function ADHDCompanion() {
       <Btn onClick={submitCheckin} sz="lg" style={{width:"100%",marginBottom:16}}>Save Check-in</Btn>
     </div>
   );
-
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // JOURNAL + WINS
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderJournal = () => {
     // Viewing single entry
     if(viewJournal){
@@ -1039,7 +1360,7 @@ export default function ADHDCompanion() {
             <Card>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                 <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:0}}>Free Write</h3>
-                <span style={{fontSize:12,color:C.txtM}}>{journalText.trim()?`${journalText.trim().split(/s+/).length} words`:""}  </span>
+                <span style={{fontSize:12,color:C.txtM}}>{journalText.trim()?`${journalText.trim().split(/\s+/).length} words`:""}</span>
               </div>
               <textarea value={journalText} onChange={e=>setJournalText(e.target.value)}
                 placeholder="Start writing... no rules, no structure. Spelling doesn't matter. Just get it out of your head."
@@ -1119,9 +1440,9 @@ export default function ADHDCompanion() {
     );
   };
 
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // MEDS
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderMeds = () => {
     const seFreq = {};
     entries.forEach(e=>(e.sideEffects||[]).forEach(s=>{seFreq[s]=(seFreq[s]||0)+1}));
@@ -1176,15 +1497,15 @@ export default function ADHDCompanion() {
         )}
 
         <Card style={{background:C.accL+"20",border:`1px solid ${C.accL}`}}>
-          <div style={{display:"flex",gap:10}}><BookOpen size={20} color={C.accD} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.accD}}>For Your Doctor</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"4px 0 0"}}>Your medication and mood data builds a picture over time. Bring this to appointments — it helps your doctor see patterns that are hard to describe from memory.</p></div></div>
+          <div style={{display:"flex",gap:10}}><BookOpen size={20} color={C.accD} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.accD}}>For Your Doctor</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"4px 0 0"}}>Your medication and mood data builds a picture over time. Bring this to your appointments.appointments — it helps your doctor see patterns that are hard to describe from memory.</p></div></div>
         </Card>
       </div>
     );
   };
 
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // TOOLKIT (Coach + Timer + Paralysis Helper + Dopamine Menu)
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderToolkit = () => (
     <div>
       <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 16px"}}>Your Toolkit</h2>
@@ -1203,9 +1524,13 @@ export default function ADHDCompanion() {
         ))}
       </div>
 
-      {/* ─── COACH / GROUNDING ─── */}
+      {/* ─── GROUNDING EXERCISES ─── */}
       {toolkitSection==="coach" && (
         <>
+          <Card style={{background:C.accL+"20",border:`1px solid ${C.accL}`}}>
+            <p style={{fontSize:13,color:C.txt,margin:0}}>Looking for your daily coaching? Check the <strong>Coach</strong> tab for personalized insights and reflection.</p>
+          </Card>
+
           {spiral && (
             <Card style={{background:spiral==="spiral"?C.dangerL+"30":C.priL+"30",border:`1px solid ${spiral==="spiral"?C.danger:C.pri}`}}>
               <p style={{fontSize:15,lineHeight:1.7,color:C.txt,margin:0,fontStyle:"italic"}}>
@@ -1432,146 +1757,7 @@ export default function ADHDCompanion() {
       )}
     </div>
   );
-
-  // ═════════════════════════════════════════════════════════════════
-  // INSIGHTS + DOCTOR EXPORT
-  // ═════════════════════════════════════════════════════════════════
-  const renderInsights = () => (
-    <div>
-      <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 4px"}}>Insights</h2>
-      <p style={{color:C.txtL,fontSize:14,margin:"0 0 24px"}}>Patterns & trends — your story in numbers.</p>
-
-      {/* Mood/Energy/Focus chart */}
-      <Card>
-        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Mood, Energy & Focus (14 days)</h3>
-        <p style={{fontSize:12,color:C.txtM,margin:"0 0 16px"}}>Do they move together or apart?</p>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke={C.brd}/>
-            <XAxis dataKey="date" tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
-            <YAxis domain={[0,5]} tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
-            <Tooltip contentStyle={{borderRadius:12,border:`1px solid ${C.brd}`,fontSize:13}}/>
-            <Line type="monotone" dataKey="mood" stroke={C.pri} strokeWidth={2.5} dot={{r:3}} name="Mood" connectNulls/>
-            <Line type="monotone" dataKey="energy" stroke={C.acc} strokeWidth={2} dot={{r:3}} name="Energy" connectNulls strokeDasharray="5 5"/>
-            <Line type="monotone" dataKey="focus" stroke={C.purp} strokeWidth={2} dot={{r:3}} name="Focus" connectNulls strokeDasharray="2 4"/>
-          </LineChart>
-        </ResponsiveContainer>
-        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8}}>
-          <span style={{fontSize:12,color:C.pri}}>● Mood</span>
-          <span style={{fontSize:12,color:C.acc}}>● Energy</span>
-          <span style={{fontSize:12,color:C.purp}}>● Focus</span>
-        </div>
-      </Card>
-
-      {/* Sleep chart */}
-      <Card>
-        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>
-          <Bed size={16} style={{marginRight:6,verticalAlign:"middle"}}/>Sleep (14 days)
-        </h3>
-        <p style={{fontSize:12,color:C.txtM,margin:"0 0 16px"}}>Hours per night — look for patterns with your mood.</p>
-        <ResponsiveContainer width="100%" height={150}>
-          <BarChart data={sleepData}>
-            <XAxis dataKey="day" tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
-            <YAxis domain={[0,12]} tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
-            <Tooltip contentStyle={{borderRadius:12,border:`1px solid ${C.brd}`,fontSize:13}} formatter={v=>[  `${v} hrs`,"Sleep"]}/>
-            <Bar dataKey="hours" fill={C.purpL} radius={[6,6,0,0]} barSize={16}/>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
-
-      {/* Emotions */}
-      {topEmotions.length>0 && (
-        <Card>
-          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 16px"}}>Emotional Landscape</h3>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={topEmotions} layout="vertical">
-              <XAxis type="number" hide/>
-              <YAxis dataKey="name" type="category" tick={{fontSize:12,fill:C.txt}} axisLine={false} tickLine={false} width={100}/>
-              <Bar dataKey="count" fill={C.priL} radius={[0,8,8,0]} barSize={18}/>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
-
-      {/* Pattern Analysis */}
-      <Card>
-        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>Pattern Analysis</h3>
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.brd}`}}>
-          <div style={{width:40,height:40,borderRadius:12,background:(spiral==="spiral"||spiral==="low")?C.dangerL+"40":C.accL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {spiral==="spiral"?<TrendingDown size={20} color={C.danger}/>:spiral==="low"?<AlertTriangle size={20} color={C.pri}/>:<TrendingUp size={20} color={C.acc}/>}
-          </div>
-          <div>
-            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>{spiral==="spiral"?"Downward Trend Detected":spiral==="low"?"Below Average Mood":"Mood Looking Stable"}</div>
-            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>{spiral==="spiral"?"Your mood has been declining. Consider reaching out to someone.":spiral==="low"?"Recent entries show lower mood. Be extra gentle.":"No concerning patterns. Keep tracking!"}</div>
-          </div>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.brd}`}}>
-          <div style={{width:40,height:40,borderRadius:12,background:C.priL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}><Target size={20} color={C.pri}/></div>
-          <div>
-            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>Tracking Consistency</div>
-            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>{streak>=7?`Amazing — ${streak} day streak!`:streak>=3?`${streak} day streak — building a habit!`:"Try checking in daily for best insights."}</div>
-          </div>
-        </div>
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0"}}>
-          <div style={{width:40,height:40,borderRadius:12,background:C.purpL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}><Bed size={20} color={C.purp}/></div>
-          <div>
-            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>Sleep Impact</div>
-            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>
-              {(()=>{
-                const withSleep = entries.filter(e=>e.sleepQuality&&e.mood);
-                if(withSleep.length<5) return "Keep logging sleep — patterns will emerge after a few entries.";
-                const good = withSleep.filter(e=>e.sleepQuality>=4);
-                const bad = withSleep.filter(e=>e.sleepQuality<=2);
-                const goodMood = good.length>0?(good.reduce((a,e)=>a+e.mood,0)/good.length).toFixed(1):0;
-                const badMood = bad.length>0?(bad.reduce((a,e)=>a+e.mood,0)/bad.length).toFixed(1):0;
-                if(good.length>0&&bad.length>0) return `Good sleep = avg mood ${goodMood}/5. Poor sleep = avg mood ${badMood}/5. Sleep matters.`;
-                return "Building sleep/mood correlation data...";
-              })()}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Cycle + Mood */}
-      {entries.some(e=>e.cycle) && (
-        <Card>
-          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Cycle & Mood Connection</h3>
-          <p style={{fontSize:12,color:C.txtM,margin:"0 0 14px"}}>Average mood by cycle phase — powerful data for your doctor.</p>
-          {CYCLE_PHASES.filter(p=>p.id!=="unsure"&&p.id!=="na").map(phase=>{
-            const pe = entries.filter(e=>e.cycle===phase.id&&e.mood);
-            if(!pe.length) return null;
-            const avg = (pe.reduce((a,e)=>a+e.mood,0)/pe.length).toFixed(1);
-            return (
-              <div key={phase.id} style={{marginBottom:12}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                  <span style={{fontSize:13,color:C.txt}}>{phase.emoji} {phase.label}</span>
-                  <span style={{fontSize:13,fontWeight:600,color:phase.color}}>{avg}/5</span>
-                </div>
-                <div style={{height:8,borderRadius:4,background:C.brd}}>
-                  <div style={{height:"100%",borderRadius:4,background:phase.color,width:`${(avg/5)*100}%`,transition:"width 0.5s"}}/>
-                </div>
-                <div style={{fontSize:11,color:C.txtM,marginTop:2}}>{pe.length} entries</div>
-              </div>
-            );
-          })}
-        </Card>
-      )}
-
-      {/* Mood Heatmap */}
-      <Card>
-        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>Daily Mood Map (14 Days)</h3>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}}>
-          {days14.map(d=>{
-            const de=entries.filter(e=>e.date===d);
-            const am=de.length>0?Math.round(de.reduce((a,e)=>a+(e.mood||3),0)/de.length):0;
-            const cols=["transparent","#D4736A","#E8985E","#E8B44E","#A8D0C4","#7EB5A6"];
-            return (
-              <div key={d} style={{aspectRatio:"1",borderRadius:10,background:am>0?cols[am]+"60":C.bg,border:`1.5px solid ${am>0?cols[am]:C.brd}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontSize:10,color:C.txtM}}>
-                <div style={{fontWeight:600}}>{dayName(d)}</div>
-                <div>{new Date(d).getDate()}</div>
-                {am>0 && <div style={{fontSize:14,marginTop:2}}>{MOODS[5-am]?.emoji}</div>}
-              </div>
-            );
+   );
           })}
         </div>
       </Card>
@@ -1620,8 +1806,8 @@ export default function ADHDCompanion() {
 
           let report = `ADHD TRACKING REPORT — Last 30 Days\n`;
           report += `Generated: ${new Date().toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"})}\n`;
-          report += `Patient: Georgia\n`;
-          report += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+          report += `Patient: ${userName||"—"}\n`;
+          report += `─────────────────────────────────────\n\n`;
           report += `OVERVIEW (${last30.length} check-ins)\n`;
           report += `  Avg Mood: ${moodAvg}/5  |  Avg Energy: ${energyAvg}/5  |  Avg Focus: ${focusAvg}/5\n`;
           report += `  Avg Sleep: ${sleepAvg} hrs  |  Sleep Quality: ${sleepQAvg}/5\n`;
@@ -1638,7 +1824,7 @@ export default function ADHDCompanion() {
               report+=`  ${label}: avg mood ${avg}/5 (${data.count} entries)\n`;
             });
           }
-          report += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+          report += `\n─────────────────────────────────────\n`;
           report += `Generated by Hummingbird App\n`;
 
           // Copy to clipboard
@@ -1659,9 +1845,9 @@ export default function ADHDCompanion() {
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // REMINDERS
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   const renderReminders = () => (
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -1723,9 +1909,9 @@ export default function ADHDCompanion() {
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   // MAIN RENDER
-  // ═════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════════════════
   return (
     <div style={{fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:C.bg,minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
       {notif && (
@@ -1747,6 +1933,37 @@ export default function ADHDCompanion() {
 
       <TabBar tabs={tabs} active={tab} onChange={setTab}/>
 
+      {showNamePrompt && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+          <div style={{background:C.card,borderRadius:24,padding:32,maxWidth:340,width:"100%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,0.15)"}}>
+            <div style={{fontSize:48,marginBottom:12}}>🌿</div>
+            <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 8px"}}>Welcome to Hummingbird</h2>
+            <p style={{fontSize:14,color:C.txtL,margin:"0 0 24px",lineHeight:1.5}}>Your ADHD companion. What should we call you?</p>
+            <input
+              value={nameInput}
+              onChange={e=>setNameInput(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter")saveName()}}
+              placeholder="Your first name"
+              autoFocus
+              style={{width:"100%",padding:14,borderRadius:14,border:`2px solid ${C.brd}`,fontSize:16,fontFamily:"inherit",textAlign:"center",boxSizing:"border-box",background:C.bg,marginBottom:16}}
+            />
+            <button
+              onClick={saveName}
+              disabled={!nameInput.trim()}
+              style={{width:"100%",padding:14,borderRadius:14,fontSize:16,fontWeight:600,fontFamily:"inherit",background:nameInput.trim()?C.pri:C.brd,color:nameInput.trim()?"#fff":C.txtL,border:"none",cursor:nameInput.trim()?"pointer":"default",transition:"all 0.2s"}}
+            >
+              Let's go ✨
+            </button>
+            <button
+              onClick={()=>{setShowNamePrompt(false)}}
+              style={{marginTop:12,background:"none",border:"none",color:C.txtL,fontSize:13,cursor:"pointer",fontFamily:"inherit"}}
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
         *{-webkit-tap-highlight-color:transparent}
@@ -1756,4 +1973,3 @@ export default function ADHDCompanion() {
     </div>
   );
 }
-
