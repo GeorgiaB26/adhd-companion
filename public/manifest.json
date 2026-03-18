@@ -1,0 +1,16 @@
+{
+  "name": "ADHD Companion",
+  "short_name": "ADHD",
+  "description": "Track your ADHD journey - mood, meds, sleep, cycle & more",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8F0",
+  "theme_color": "#E8985E",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💛</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
