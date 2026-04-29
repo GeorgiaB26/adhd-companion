@@ -1535,7 +1535,7 @@ export default function ADHDCompanion() {
                       <td style={{fontSize:12,color:C.txt,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:100}}>{h.icon} {h.name}</td>
                       {last7.map(d=>{
                         const done = isHabitDone(h.id,d);
-                        return <td key={d} style={{textAlign:"center"}}><div style={{width:24,height:24,borderRadius:6,background:done?C.acc+90:C.brd+"80",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center"}}>{done&&<Check size={12} color="#fff"/>}</div></td>;
+                        return <td key={d} style={{textAlign:"center"}}><div onClick={(e)=>{e.stopPropagation();toggleHabit(h.id,d)}} style={{width:28,height:28,borderRadius:8,background:done?C.acc:C.brd+"80",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all 0.2s",border:done?`2px solid ${C.accD}`:"2px solid transparent"}}>{done&&<Check size={14} color="#fff"/>}</div></td>;
                       })}
                     </tr>
                   ))}
@@ -2201,4 +2201,3 @@ export default function ADHDCompanion() {
     </div>
   );
 }
-
