@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, CartesianGrid } from "recharts";
-import { Heart, Brain, Zap, Sun, Moon, Cloud, CloudRain, AlertTriangle, Check, Plus, X, ChevronLeft, ChevronRight, Pill, Wind, Clock, Bell, TrendingDown, TrendingUp, Activity, BookOpen, Smile, Trash2, Star, Shield, Eye, Target, Volume2, VolumeX, Feather, MoreHorizontal, Play, Pause, RotateCcw, Sparkles, Trophy, FileText, ChevronDown, ChevronUp, Bed, Droplets, Coffee, ListChecks, Rocket, Timer, MessageCircle } from "lucide-react";
+import { Heart, Brain, Zap, Sun, Moon, Cloud, CloudRain, AlertTriangle, Check, Plus, X, ChevronLeft, ChevronRight, Pill, Wind, Clock, Bell, TrendingDown, TrendingUp, Activity, BookOpen, Smile, Trash2, Star, Shield, Eye, Target, Volume2, VolumeX, Feather, MoreHorizontal, Play, Pause, RotateCcw, Sparkles, Trophy, FileText, ChevronDown, ChevronUp, Bed, Droplets, Coffee, ListChecks, Rocket, Timer, MessageCircle, Flame, BellRing } from "lucide-react";
 
-// ─── Theme ──────────────────────────────────────────────────────────────────────
+// ─── Theme ──────────────────────────────────────────────────────────
 const C = {
   bg: "#FFF8F0", card: "#FFFFFF", cardAlt: "#FFF5EB",
   pri: "#E8985E", priL: "#F5C8A0", priD: "#C47A3F",
@@ -13,7 +13,7 @@ const C = {
   rose: "#D4736A", roseL: "#F0B5AF",
 };
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────
 const MOODS = [
   { emoji: "😊", label: "Great", value: 5, color: "#7EB5A6" },
   { emoji: "🙂", label: "Good", value: 4, color: "#A8D0C4" },
@@ -43,7 +43,8 @@ const EMOTIONS = [
   "Overwhelmed","Restless","Frustrated","Anxious","Impulsive","Hyperfocused","Creative",
   "Scattered","Calm","Motivated","Paralysed","Irritable","Hopeful","Exhausted","Euphoric",
   "Rejected","Bored","Determined","Confused","Grateful",
-];const SIDE_EFFECTS = [
+];
+const SIDE_EFFECTS = [
   "Dry mouth","Loss of appetite","Insomnia","Headache","Nausea","Jitteriness","Mood swings",
   "Fatigue","Irritability","Heart racing","Stomach pain","Dizziness","Brain fog clearing","Improved focus",
 ];
@@ -117,9 +118,9 @@ const DEFAULT_DOPAMINE = [
   { id:"d9", text:"Tidy one small surface", category:"movement" },
   { id:"d10", text:"Write 3 things you're grateful for", category:"reflection" },
 ];
-const DOPAMINE_CATS = { movement:"🏃", connection:"💬", sensory:"✨", rest:"🛏️", creative:"🎨", reflection:"📝", other:"💭" };
+const DOPAMINE_CATS = { movement:"🏃", connection:"💬", sensory:"✨", rest:"🛋️", creative:"🎨", reflection:"📝", other:"💫" };
 
-// ─── Helpers ────────────────────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────
 const dateKey = (d = new Date()) => d.toISOString().split("T")[0];
 const timeStr = () => new Date().toLocaleTimeString("en-AU",{hour:"2-digit",minute:"2-digit"});
 const dayName = s => new Date(s).toLocaleDateString("en-AU",{weekday:"short"});
@@ -140,7 +141,7 @@ function detectSpiral(entries) {
   return null;
 }
 
-// ─── UI Primitives ──────────────────────────────────────────────────────────────
+// ─── UI Primitives ──────────────────────────────────────────────────
 const Card = ({children, style, onClick}) => (
   <div onClick={onClick} style={{background:C.card,borderRadius:20,padding:20,marginBottom:16,boxShadow:"0 2px 12px rgba(74,55,40,0.06)",border:`1px solid ${C.brd}`,cursor:onClick?"pointer":"default",transition:"transform 0.2s",...style}}>
     {children}
@@ -171,7 +172,7 @@ const TabBar = ({tabs,active,onChange}) => (
   </div>
 );
 
-// ─── Breathing Circle ────────────────────────────────────────────────────────────
+// ─── Breathing Circle ───────────────────────────────────────────────
 const BreathCircle = ({active,phase,sec}) => {
   const s = phase==="in"||phase==="hold-in"?1.4:phase==="out"||phase==="hold-out"?0.8:1;
   const l = {"in":"Breathe In","hold-in":"Hold","out":"Breathe Out","hold-out":"Hold","ready":"Tap Start"};
@@ -187,9 +188,9 @@ const BreathCircle = ({active,phase,sec}) => {
   );
 };
 
-// ═════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 // MAIN APP
-// ═════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 export default function ADHDCompanion() {
   const [tab, setTab] = useState("home");
   const [entries, setEntries] = useState([]);
@@ -260,7 +261,90 @@ export default function ADHDCompanion() {
   const [paraStep, setParaStep] = useState(0);
   const [paraStarted, setParaStarted] = useState(false);
 
-  // ─── Sample Data ────────────────────────────────────────────────────────────
+  // Habit Tracker (persisted to localStorage)
+  const [habits, setHabits] = useState(()=>{try{const h=localStorage.getItem("hb_habits");return h?JSON.parse(h):[]}catch{return []}});
+  const [habitLog, setHabitLog] = useState(()=>{try{const h=localStorage.getItem("hb_habitlog");return h?JSON.parse(h):{}}catch{return {}}});
+  const [newHabitName, setNewHabitName] = useState("");
+  const [newHabitIcon, setNewHabitIcon] = useState("💧");
+  const [newHabitGoal, setNewHabitGoal] = useState("");
+  const [showHabitForm, setShowHabitForm] = useState(false);
+
+  // Persist habits
+  useEffect(()=>{try{localStorage.setItem("hb_habits",JSON.stringify(habits))}catch{}},[habits]);
+  useEffect(()=>{try{localStorage.setItem("hb_habitlog",JSON.stringify(habitLog))}catch{}},[habitLog]);
+
+  const toggleHabit = (habitId, day=dateKey()) => {
+    setHabitLog(prev => {
+      const key = `${day}_${habitId}`;
+      const next = {...prev};
+      if(next[key]) delete next[key]; else next[key] = true;
+      return next;
+    });
+  };
+  const isHabitDone = (habitId, day=dateKey()) => !!habitLog[`${day}_${habitId}`];
+  const getHabitStreak = (habitId) => {
+    let streak = 0;
+    for(let i=0;i<60;i++){
+      const d = new Date(); d.setDate(d.getDate()-i);
+      const key = `${dateKey(d)}_${habitId}`;
+      if(habitLog[key]) streak++; else if(i>0) break;
+    }
+    return streak;
+  };
+  const addHabit = () => {
+    if(!newHabitName.trim()) return;
+    setHabits(p=>[...p,{id:Date.now().toString(),name:newHabitName.trim(),icon:newHabitIcon,goal:newHabitGoal.trim(),createdAt:dateKey()}]);
+    setNewHabitName(""); setNewHabitIcon("💧"); setNewHabitGoal(""); setShowHabitForm(false);
+    notify("Habit added! Consistency beats perfection.","success");
+  };
+
+  // Push notifications
+  const [pushEnabled, setPushEnabled] = useState(()=>{try{return localStorage.getItem("hb_push")==="true"}catch{return false}});
+  const requestPushPermission = () => {
+    if(!("Notification" in window)){notify("Push notifications aren't supported in this browser.","warn");return;}
+    if(!("serviceWorker" in navigator)){notify("Service workers not supported — push needs a modern browser.","warn");return;}
+    Notification.requestPermission().then(perm => {
+      if(perm==="granted"){
+        setPushEnabled(true);
+        try{localStorage.setItem("hb_push","true")}catch{}
+        registerServiceWorker();
+        notify("Notifications enabled! You'll get gentle nudges morning & evening.","success");
+      } else {
+        notify("Notifications blocked. You can enable them in your browser settings.","warn");
+      }
+    });
+  };
+  const registerServiceWorker = () => {
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.register("/sw.js").catch(()=>{});
+    }
+  };
+  useEffect(()=>{
+    if(pushEnabled && "Notification" in window && Notification.permission==="granted"){
+      registerServiceWorker();
+      // Schedule check — show notifications if app is open at the right time
+      const checkNotif = () => {
+        const h = new Date().getHours();
+        const m = new Date().getMinutes();
+        const lastMorning = localStorage.getItem("hb_notif_morning");
+        const lastEvening = localStorage.getItem("hb_notif_evening");
+        const today = dateKey();
+        if(h===9 && m<15 && lastMorning!==today){
+          new Notification("Hummingbird 🌿",{body:`Good morning${userName?", "+userName:""}! Quick check-in when you're ready.`,icon:"/logo.svg"});
+          localStorage.setItem("hb_notif_morning",today);
+        }
+        if(h===20 && m<15 && lastEvening!==today){
+          new Notification("Hummingbird 🌿",{body:`Evening${userName?", "+userName:""}! Time to log your wins and reflect on today.`,icon:"/logo.svg"});
+          localStorage.setItem("hb_notif_evening",today);
+        }
+      };
+      const iv = setInterval(checkNotif, 60000);
+      checkNotif();
+      return ()=>clearInterval(iv);
+    }
+  },[pushEnabled, userName]);
+
+  // ─── Sample Data ──────────────────────────────────────────────────
   useEffect(() => {
     const sample = [];
     recentDays(14).forEach((day,i) => {
@@ -343,7 +427,7 @@ export default function ADHDCompanion() {
 
   const notify = (msg,type="info") => { setNotif({msg,type}); setTimeout(()=>setNotif(null),5000); };
 
-  // ─── Actions ────────────────────────────────────────────────────────────────
+  // ─── Actions ──────────────────────────────────────────────────────
   const submitCheckin = () => {
     if(!ci.mood){notify("Select a mood first","warn");return;}
     setEntries(p=>[...p,{id:Date.now().toString(),date:dateKey(),time:timeStr(),...ci}]);
@@ -405,7 +489,7 @@ export default function ADHDCompanion() {
     setParaStarted(true);
   };
 
-  // ─── Computed Data ──────────────────────────────────────────────────────────
+  // ─── Computed Data ────────────────────────────────────────────────
   const days14 = recentDays(14);
   const chartData = days14.map(d => {
     const de = entries.filter(e=>e.date===d);
@@ -426,7 +510,7 @@ export default function ADHDCompanion() {
     return {date:fmtDate(d),day:dayName(d),hours:hrs.length>0?Math.round(hrs.reduce((a,b)=>a+b,0)/hrs.length*10)/10:null};
   });
 
-  // ─── Pattern Reflection Engine ──────────────────────────────────────────────
+  // ─── Pattern Reflection Engine ────────────────────────────────────
   const generateInsights = () => {
     const insights = [];
     if(entries.length < 3) return insights;
@@ -461,189 +545,7 @@ export default function ADHDCompanion() {
       const lowSleep = sleepMoods.filter(s=>s.sleep<6);
       const goodSleep = sleepMoods.filter(s=>s.sleep>=7);
       if(lowSleep.length>=3 && goodSleep.length>=3) {
-        const lowSleepMood = lowSleep.reduce((a,b)=>a+b.mood,0)/lowSleep.length;
-        const goodSleepMood = goodSleep.reduce((a,b)=>a+b.mood,0)/goodSleep.length;
-        if(goodSleepMood > lowSleepMood + 0.5) {
-          insights.push({
-            type:"sleep",
-            icon:Bed,
-            title:"Sleep = Your Secret Weapon",
-            message:`When you get 7+ hours, your mood averages ${goodSleepMood.toFixed(1)}. When you get <6, it drops to ${lowSleepMood.toFixed(1)}. That's your proof: sleep isn't lazy, it's medicine.`,
-            color:C.acc
-          });
-        }
-      }
-    }
-
-    // Cycle-mood correlation (if data exists)
-    const cycleEntriesWithMood = entries.filter(e=>e.cycle&&e.mood);
-    if(cycleEntriesWithMood.length >= 5) {
-      const cycleMood = {};
-      cycleEntriesWithMood.forEach(e => {
-        if(!cycleMood[e.cycle]) cycleMood[e.cycle] = [];
-        cycleMood[e.cycle].push(e.mood);
-      });
-      const worstCycle = Object.entries(cycleMood).sort((a,b)=>{
-        const avgA = a[1].reduce((x,y)=>x+y,0)/a[1].length;
-        const avgB = b[1].reduce((x,y)=>x+y,0)/b[1].length;
-        return avgA - avgB;
-      })[0];
-      if(worstCycle) {
-        const cp = CYCLE_PHASES.find(p=>p.id===worstCycle[0]);
-        if(cp) {
-          const avg = worstCycle[1].reduce((a,b)=>a+b,0)/worstCycle[1].length;
-          insights.push({
-            type:"cycle",
-            icon:Cloud,
-            title:`${cp.label} Pattern`,
-            message:`${cp.desc} Your mood data shows a dip here (avg ${avg.toFixed(1)}). This is REAL, not in your head.`,
-            color:C.warn
-          });
-        }
-      }
-    }
-
-    // Medication-emotion correlation
-    if(entries.some(e=>Object.keys(e.medTaken||{}).length>0)) {
-      const medsWithEmotions = entries.filter(e=>Object.keys(e.medTaken||{}).length>0);
-      if(medsWithEmotions.length >= 5) {
-        const commonEmotions = {};
-        medsWithEmotions.forEach(e => (e.emotions||[]).forEach(em => commonEmotions[em] = (commonEmotions[em]||0) + 1));
-        const topEm = Object.entries(commonEmotions).sort((a,b)=>b[1]-a[1])[0];
-        if(topEm && topEm[1] >= 3) {
-          insights.push({
-            type:"med",
-            icon:Pill,
-            title:"On Your Meds, You Often Feel...",
-            message:`When you take your meds, "${topEm[0]}" shows up ${topEm[1]} times. What patterns do you notice?`,
-            color:C.pri
-          });
-        }
-      }
-    }
-
-    // Journaling-mood correlation
-    if(journalEntries.length >= 5) {
-      const journalDays = new Set(journalEntries.map(j=>j.date));
-      const journalEntriesMood = entries.filter(e=>journalDays.has(e.date)&&e.mood);
-      if(journalEntriesMood.length >= 3) {
-        const journalMoodAvg = journalEntriesMood.reduce((a,b)=>a+b.mood,0)/journalEntriesMood.length;
-        const nonJournalMoodAvg = entries.filter(e=>!journalDays.has(e.date)&&e.mood).length >= 3
-          ? entries.filter(e=>!journalDays.has(e.date)&&e.mood).reduce((a,b)=>a+b.mood,0) / entries.filter(e=>!journalDays.has(e.date)&&e.mood).length
-          : null;
-        if(nonJournalMoodAvg && journalMoodAvg > nonJournalMoodAvg + 0.3) {
-          insights.push({
-            type:"journal",
-            icon:BookOpen,
-            title:"Writing Shifts Your Mood",
-            message:`On days you journal, your mood is ${journalMoodAvg.toFixed(1)}. On other days, ${nonJournalMoodAvg.toFixed(1)}. That's not a coincidence.`,
-            color:C.accD
-          });
-        }
-      }
-    }
-
-    return insights;
-  };
-
-  const insights = generateInsights();
-
-  // ─── Home Screen ───────────────────────────────────────────────────
-  if(tab === "home") return (
-    <div style={{paddingBottom:90}}>
-      {notif && <div style={{position:"fixed",top:16,left:16,right:16,background:notif.type==="warn"?C.warn:notif.type==="success"?C.acc:C.pri,color:"#fff",padding:14,borderRadius:12,zIndex:1000,fontSize:14,fontWeight:500}}>{notif.msg}</div>}
-      {showNamePrompt && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:2000}}>
-        <div style={{background:C.card,borderRadius:24,padding:28,maxWidth:300}}>
-          <div style={{fontSize:18,fontWeight:700,marginBottom:12,color:C.txt}}>Welcome to ADHD Companion</div>
-          <div style={{fontSize:14,color:C.txtL,marginBottom:20}}>What's your name?</div>
-          <input value={nameInput} onChange={e=>setNameInput(e.target.value)} onKeyPress={e=>e.key==="Enter"&&saveName()} placeholder="Tell me your name" style={{width:"100%",padding:10,border:`1px solid ${C.brd}`,borderRadius:10,marginBottom:16,fontSize:14,boxSizing:"border-box"}}/>
-          <Btn onClick={saveName}>Let's go!</Btn>
-        </div>
-      </div>}
-      <div style={{background:`linear-gradient(135deg,${C.pri},${C.priL})`,padding:20,color:"#fff"}}>
-        <div style={{fontSize:22,fontWeight:700}}>Hey {userName || "there"}! 👋</div>
-        <div style={{fontSize:14,opacity:0.9,marginTop:6}}>{new Date().toLocaleDateString("en-AU",{weekday:"long",month:"long",day:"numeric"})}</div>
-      </div>
-      <div style={{padding:20}}>
-        <div style={{display:"flex",gap:10,marginBottom:20}}>
-          <Card style={{flex:1,marginBottom:0}}>
-            <div style={{fontSize:12,color:C.txtL,fontWeight:500}}>Your 7-day avg mood</div>
-            <div style={{fontSize:26,fontWeight:700,color:C.pri,marginTop:4}}>{avgMood7}</div>
-          </Card>
-          <Card style={{flex:1,marginBottom:0}}>
-            <div style={{fontSize:12,color:C.txtL,fontWeight:500}}>Check-in streak</div>
-            <div style={{fontSize:26,fontWeight:700,color:C.acc,marginTop:4}}>{streak} 🔥</div>
-          </Card>
-        </div>
-
-        {todayE.length === 0 && <Card onClick={()=>setTab("checkin")} style={{background:`linear-gradient(135deg,${C.priL},${C.cardAlt})`,cursor:"pointer",marginBottom:20}}>
-          <div style={{fontSize:15,fontWeight:600,color:C.priD}}>👉 Tap to check in today</div>
-          <div style={{fontSize:13,color:C.txtL,marginTop:6}}>How are you feeling right now?</div>
-        </Card>}
-
-        {spiral === "spiral" && <Card style={{border:`2px solid ${C.danger}`,background:C.dangerL+"40"}}>
-          <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-            <AlertTriangle color={C.danger} size={20} style={{flexShrink:0,marginTop:2}}/>
-            <div>
-              <div style={{fontSize:14,fontWeight:600,color:C.danger}}>I've noticed a pattern</div>
-              <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{pick(COACHING.spiral)}</div>
-              <div style={{display:"flex",gap:8,marginTop:12}}>
-                <Btn v="danger" sz="sm" onClick={()=>setTab("toolkit")}>Try a tool</Btn>
-                <Btn v="ghost" sz="sm" onClick={()=>setTab("journal")}>Write it out</Btn>
-              </div>
-            </div>
-          </div>
-        </Card>}
-
-        {spiral === "low" && <Card style={{border:`2px solid ${C.warn}`,background:C.warn+"20"}}>
-          <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-            <Cloud color={C.warn} size={20} style={{flexShrink:0,marginTop:2}}/>
-            <div>
-              <div style={{fontSize:14,fontWeight:600,color:C.warn}}>Your energy is low</div>
-              <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{pick(COACHING.low)}</div>
-              <div style={{display:"flex",gap:8,marginTop:12}}>
-                <Btn v="ghost" sz="sm" onClick={()=>setTab("dopamine")}>Dopamine menu</Btn>
-              </div>
-            </div>
-          </div>
-        </Card>}
-
-        <div style={{fontSize:13,fontWeight:700,color:C.txt,marginTop:28,marginBottom:12}}>INSIGHTS</div>
-        {insights.length === 0 ? (
-          <Card style={{textAlign:"center",color:C.txtL}}>
-            <div style={{fontSize:13}}>Keep checking in. Patterns emerge after ~5 entries.</div>
-          </Card>
-        ) : insights.map((ins,i) => (
-          <Card key={i} style={{border:`1px solid ${ins.color}`,background:ins.color+"12"}}>
-            <div style={{display:"flex",gap:10}}>
-              <ins.icon color={ins.color} size={20} style={{flexShrink:0,marginTop:2}}/>
-              <div style={{flex:1}}>
-                <div style={{fontSize:14,fontWeight:600,color:ins.color}}>{ins.title}</div>
-                <div style={{fontSize:13,color:C.txtL,marginTop:6}}>{ins.message}</div>
-              </div>
-            </div>
-          </Card>
-        ))}
-
-        <div style={{fontSize:13,fontWeight:700,color:C.txt,marginTop:28,marginBottom:12}}>RECENT ENTRIES</div>
-        {entries.slice(-3).reverse().map(e => (
-          <Card key={e.id}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
-              <div>
-                <div style={{fontSize:13,fontWeight:600,color:C.txt}}>{fmtDate(e.date)} • {e.time}</div>
-                <div style={{fontSize:12,color:C.txtL,marginTop:2}}>Mood: {e.mood ? MOODS.find(m=>m.value===e.mood)?.emoji : "—"} Energy: {e.energy ? ENERGY.find(en=>en.value===e.energy)?.label : "—"}</div>
-              </div>
-            </div>
-            {e.emotions?.length > 0 && <div style={{marginTop:10}}>
-              <div style={{fontSize:12,color:C.txtL,fontWeight:500,marginBottom:6}}>Feeling: {e.emotions.join(", ")}</div>
-            </div>}
-            {e.sleepHours && <div style={{fontSize:12,color:C.txtL,marginTop:6}}>Sleep: {e.sleepHours}h</div>}
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
+        const avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
         const avgGood = goodSleep.reduce((a,e)=>a+e.mood,0)/goodSleep.length;
         if(avgGood > avgLow + 0.5) {
           insights.push({
@@ -841,21 +743,22 @@ t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
 
   const insights = generateInsights();
 
-  // ─── Tabs Config ──────────────────────────────────────────────────────────
+  // ─── Tabs Config ──────────────────────────────────────────────────
   const tabs = [
     {id:"home",icon:Heart,label:"Home"},
     {id:"coach",icon:MessageCircle,label:"Coach"},
     {id:"checkin",icon:Smile,label:"Check In"},
     {id:"journal",icon:Feather,label:"Journal"},
     {id:"meds",icon:Pill,label:"Meds"},
+    {id:"habits",icon:Flame,label:"Habits"},
     {id:"toolkit",icon:Shield,label:"Toolkit"},
     {id:"insights",icon:Activity,label:"Insights"},
     {id:"reminders",icon:Bell,label:"Reminders"},
   ];
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // HOME
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderHome = () => (
     <div>
       <div style={{marginBottom:24}}>
@@ -920,6 +823,24 @@ t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
         </ResponsiveContainer>
       </Card>
 
+      {/* Habits Progress on Home */}
+      {habits.length>0 && (
+        <Card onClick={()=>setTab("habits")} style={{cursor:"pointer",padding:16}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <Flame size={20} color={C.pri}/>
+              <div>
+                <div style={{fontSize:14,fontWeight:600,color:C.txt}}>Today's Habits</div>
+                <div style={{fontSize:12,color:C.txtM,marginTop:2}}>{habits.filter(h=>isHabitDone(h.id)).length}/{habits.length} done</div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:4}}>
+              {habits.map(h=><div key={h.id} style={{width:10,height:10,borderRadius:"50%",background:isHabitDone(h.id)?C.acc:C.brd}}/>)}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Quick Actions */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
         <Card onClick={()=>{setTab("toolkit");setToolkitSection("timer")}} style={{cursor:"pointer",padding:16,marginBottom:0,textAlign:"center"}}>
@@ -981,9 +902,9 @@ t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // COACH
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderCoach = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -1114,15 +1035,7 @@ t avgLow = lowSleep.reduce((a,e)=>a+e.mood,0)/lowSleep.length;
         <div>
           <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"16px 0 12px"}}>Grounding & Support</h3>
           <Card style={{textAlign:"center"}}>
-            <h4 style={{fontSize:14,fontWeight:600,color:C.txt,margin:0}}>Try a grounding exercise</h4>
-            <p style={{fontSize:13,color:C.txtL,margin:"6px 0 12px"}}>When things feel big, ground yourself in the present</p>
-            <Btn v="sec" sz="sm" onClick={()=>{setTab("toolkit");setToolkitSection("coach")}}>Open Toolkit</Btn>
-          </Card>
-        </div>
-      </div>
-    );
-  };
-ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
+            <h4 style={{fontSize:14,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
             <p style={{fontSize:12,color:C.txtL,margin:"0 0 8px"}}>4 cycles to calm your nervous system</p>
             <BreathCircle active={breathActive} phase={breathPhase} sec={breathSec}/>
             {breathActive && <div style={{fontSize:12,color:C.txtM,marginBottom:8}}>Cycle {breathCycles+1} of 4</div>}
@@ -1162,9 +1075,9 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
     );
   };
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // CHECK-IN
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderCheckin = () => (
     <div>
       <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 4px"}}>Check In</h2>
@@ -1299,9 +1212,10 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
       <Btn onClick={submitCheckin} sz="lg" style={{width:"100%",marginBottom:16}}>Save Check-in</Btn>
     </div>
   );
-  // ═════════════════════════════════════════════════════════════════════════════════
+
+  // ═════════════════════════════════════════════════════════════════
   // JOURNAL + WINS
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderJournal = () => {
     // Viewing single entry
     if(viewJournal){
@@ -1440,9 +1354,9 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
     );
   };
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // MEDS
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderMeds = () => {
     const seFreq = {};
     entries.forEach(e=>(e.sideEffects||[]).forEach(s=>{seFreq[s]=(seFreq[s]||0)+1}));
@@ -1497,15 +1411,189 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
         )}
 
         <Card style={{background:C.accL+"20",border:`1px solid ${C.accL}`}}>
-          <div style={{display:"flex",gap:10}}><BookOpen size={20} color={C.accD} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.accD}}>For Your Doctor</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"4px 0 0"}}>Your medication and mood data builds a picture over time. Bring this to your appointments.appointments — it helps your doctor see patterns that are hard to describe from memory.</p></div></div>
+          <div style={{display:"flex",gap:10}}><BookOpen size={20} color={C.accD} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.accD}}>For Your Doctor</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"4px 0 0"}}>Your medication and mood data builds a picture over time. Bring this to appointments — it helps your doctor see patterns that are hard to describe from memory.</p></div></div>
         </Card>
       </div>
     );
   };
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
+  // HABITS
+  // ═════════════════════════════════════════════════════════════════
+  const HABIT_ICONS = ["💧","🏃","🥗","💊","📖","🧘","🛌","🚶","💪","🍎","☀️","🧠","🎯","🌿","❤️","✍️","🥤","🧹","📵","🤝"];
+  const renderHabits = () => {
+    const todayKey = dateKey();
+    const todayDone = habits.filter(h=>isHabitDone(h.id,todayKey)).length;
+    const todayTotal = habits.length;
+    const pct = todayTotal>0?Math.round(todayDone/todayTotal*100):0;
+    const last7 = recentDays(7);
+    return (
+      <div>
+        <div style={{marginBottom:24}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:0}}>Daily Habits</h2>
+              <p style={{color:C.txtL,fontSize:13,margin:"4px 0 0"}}>Build consistency, one day at a time</p>
+            </div>
+            <Btn sz="sm" onClick={()=>setShowHabitForm(true)}><Plus size={16} style={{marginRight:4}}/> Add</Btn>
+          </div>
+        </div>
+
+        {/* Today's Progress */}
+        {habits.length>0 && (
+          <Card style={{background:`linear-gradient(135deg,${C.accL}20,${C.priL}15)`,border:`1px solid ${C.acc}40`}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+              <div>
+                <div style={{fontSize:13,color:C.txtL}}>Today's progress</div>
+                <div style={{fontSize:28,fontWeight:700,color:pct===100?C.acc:C.pri}}>{todayDone}/{todayTotal}</div>
+              </div>
+              <div style={{width:60,height:60,borderRadius:"50%",background:`conic-gradient(${pct===100?C.acc:C.pri} ${pct*3.6}deg, ${C.brd} 0deg)`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <div style={{width:48,height:48,borderRadius:"50%",background:C.card,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:pct===100?C.acc:C.pri}}>
+                  {pct}%
+                </div>
+              </div>
+            </div>
+            {pct===100 && <div style={{fontSize:14,color:C.acc,fontWeight:600,textAlign:"center"}}>All habits done today! You're on fire 🔥</div>}
+            {pct>0&&pct<100 && <div style={{fontSize:13,color:C.txtL,textAlign:"center"}}>Keep going — every tick matters</div>}
+          </Card>
+        )}
+
+        {/* Add Habit Form */}
+        {showHabitForm && (
+          <Card style={{border:`2px solid ${C.pri}`}}>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>New Habit</h3>
+            <input value={newHabitName} onChange={e=>setNewHabitName(e.target.value)} placeholder="e.g. Drink 2L water, 30 min walk, Eat a real meal..." onKeyDown={e=>{if(e.key==="Enter"&&newHabitName.trim())addHabit()}}
+              style={{width:"100%",padding:12,borderRadius:12,border:`1.5px solid ${C.brd}`,fontSize:14,fontFamily:"inherit",marginBottom:10,boxSizing:"border-box",background:C.bg}}/>
+            <div style={{fontSize:12,color:C.txtL,marginBottom:6}}>Pick an icon</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>
+              {HABIT_ICONS.map(ic=>(
+                <button key={ic} onClick={()=>setNewHabitIcon(ic)} style={{fontSize:22,padding:6,borderRadius:10,background:newHabitIcon===ic?C.priL+"60":"transparent",border:newHabitIcon===ic?`2px solid ${C.pri}`:"2px solid transparent",cursor:"pointer",transition:"all 0.2s"}}>{ic}</button>
+              ))}
+            </div>
+            <input value={newHabitGoal} onChange={e=>setNewHabitGoal(e.target.value)} placeholder="Daily goal (optional) e.g. 10,000 steps, 2 litres..."
+              style={{width:"100%",padding:12,borderRadius:12,border:`1.5px solid ${C.brd}`,fontSize:14,fontFamily:"inherit",marginBottom:14,boxSizing:"border-box",background:C.bg}}/>
+            <div style={{display:"flex",gap:8}}>
+              <Btn onClick={addHabit} style={{flex:1}}>Save</Btn>
+              <Btn v="ghost" onClick={()=>{setShowHabitForm(false);setNewHabitName("");setNewHabitGoal("")}}>Cancel</Btn>
+            </div>
+          </Card>
+        )}
+
+        {/* Today's Habits */}
+        {habits.map(h=>{
+          const done = isHabitDone(h.id);
+          const streak = getHabitStreak(h.id);
+          return (
+            <Card key={h.id} onClick={()=>toggleHabit(h.id)} style={{cursor:"pointer",padding:16,background:done?C.accL+"15":C.card,border:done?`1.5px solid ${C.acc}40`:`1px solid ${C.brd}`,transition:"all 0.2s"}}>
+              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                <div style={{width:44,height:44,borderRadius:14,background:done?C.acc:C.brd,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.3s",fontSize:done?20:22}}>
+                  {done?<Check size={22} color="#fff"/>:<span>{h.icon}</span>}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:15,color:done?C.accD:C.txt,textDecoration:done?"line-through":"none",transition:"all 0.2s"}}>{h.name}</div>
+                  {h.goal && <div style={{fontSize:12,color:C.txtM,marginTop:2}}>{h.goal}</div>}
+                </div>
+                <div style={{textAlign:"center"}}>
+                  {streak>0 && (
+                    <div style={{display:"flex",alignItems:"center",gap:3}}>
+                      <Flame size={14} color={streak>=7?C.pri:C.txtM}/>
+                      <span style={{fontSize:13,fontWeight:600,color:streak>=7?C.pri:C.txtM}}>{streak}</span>
+                    </div>
+                  )}
+                </div>
+                <button onClick={e=>{e.stopPropagation();setHabits(p=>p.filter(x=>x.id!==h.id))}} style={{background:"none",border:"none",cursor:"pointer",padding:6}}>
+                  <Trash2 size={14} color={C.txtM}/>
+                </button>
+              </div>
+            </Card>
+          );
+        })}
+
+        {habits.length===0 && !showHabitForm && (
+          <Card style={{textAlign:"center",padding:40}}>
+            <Flame size={36} color={C.txtM}/>
+            <p style={{color:C.txtM,marginTop:12,fontSize:14}}>No habits yet. Add whatever matters to you — water, movement, meds, meals, whatever.</p>
+            <Btn sz="sm" onClick={()=>setShowHabitForm(true)} style={{marginTop:12}}>Add Your First Habit</Btn>
+          </Card>
+        )}
+
+        {/* 7-Day Heatmap */}
+        {habits.length>0 && (
+          <Card>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>Last 7 Days</h3>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"separate",borderSpacing:4,fontSize:12}}>
+                <thead>
+                  <tr>
+                    <td style={{width:100}}></td>
+                    {last7.map(d=><td key={d} style={{textAlign:"center",color:C.txtM,fontSize:10,fontWeight:600,padding:"4px 2px"}}>{dayName(d)}<br/>{new Date(d).getDate()}</td>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {habits.map(h=>(
+                    <tr key={h.id}>
+                      <td style={{fontSize:12,color:C.txt,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:100}}>{h.icon} {h.name}</td>
+                      {last7.map(d=>{
+                        const done = isHabitDone(h.id,d);
+                        return <td key={d} style={{textAlign:"center"}}><div style={{width:24,height:24,borderRadius:6,background:done?C.acc+90:C.brd+"80",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center"}}>{done&&<Check size={12} color="#fff"/>}</div></td>;
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+
+        {/* Consistency Stats */}
+        {habits.length>0 && (
+          <Card style={{background:C.priL+"15",border:`1px solid ${C.priL}`}}>
+            <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 12px"}}>Streaks</h3>
+            {habits.map(h=>{
+              const streak = getHabitStreak(h.id);
+              const last7done = last7.filter(d=>isHabitDone(h.id,d)).length;
+              return (
+                <div key={h.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${C.brd}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:18}}>{h.icon}</span>
+                    <span style={{fontSize:14,color:C.txt}}>{h.name}</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <span style={{fontSize:12,color:C.txtM}}>{last7done}/7 this week</span>
+                    {streak>0 && <span style={{fontSize:13,fontWeight:600,color:streak>=7?C.pri:C.txtL,display:"flex",alignItems:"center",gap:3}}><Flame size={14}/>{streak}d</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </Card>
+        )}
+
+        {/* Push Notifications */}
+        <Card style={{background:C.purpL+"15",border:`1px solid ${C.purpL}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <BellRing size={22} color={C.purp}/>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:14,color:C.purp}}>Daily Reminders</div>
+              <p style={{fontSize:13,color:C.txt,margin:"4px 0 0",lineHeight:1.5}}>
+                {pushEnabled?"You'll get a gentle nudge at 9am and 8pm to check in and log your day.":"Get morning & evening reminders to stay consistent with your tracking."}
+              </p>
+            </div>
+            <Btn v={pushEnabled?"sec":"acc"} sz="sm" onClick={pushEnabled?()=>{setPushEnabled(false);try{localStorage.setItem("hb_push","false")}catch{};notify("Notifications turned off.")}:requestPushPermission}>
+              {pushEnabled?"Off":"Enable"}
+            </Btn>
+          </div>
+        </Card>
+
+        <Card style={{background:C.accL+"15",border:`1px solid ${C.accL}`}}>
+          <div style={{display:"flex",gap:10}}><Brain size={20} color={C.accD} style={{flexShrink:0,marginTop:2}}/><div><div style={{fontWeight:600,fontSize:14,color:C.accD}}>ADHD & Habits</div><p style={{fontSize:13,color:C.txt,lineHeight:1.6,margin:"6px 0 0"}}>ADHD brains struggle with consistency — that's neurology, not willpower. Start with just 1-2 habits. Missing a day doesn't break a streak of effort. What matters is that you keep showing up.</p></div></div>
+        </Card>
+      </div>
+    );
+  };
+
+  // ═════════════════════════════════════════════════════════════════
   // TOOLKIT (Coach + Timer + Paralysis Helper + Dopamine Menu)
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderToolkit = () => (
     <div>
       <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 16px"}}>Your Toolkit</h2>
@@ -1757,7 +1845,146 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
       )}
     </div>
   );
-   );
+
+  // ═════════════════════════════════════════════════════════════════
+  // INSIGHTS + DOCTOR EXPORT
+  // ═════════════════════════════════════════════════════════════════
+  const renderInsights = () => (
+    <div>
+      <h2 style={{fontSize:22,fontWeight:700,color:C.txt,margin:"0 0 4px"}}>Insights</h2>
+      <p style={{color:C.txtL,fontSize:14,margin:"0 0 24px"}}>Patterns & trends — your story in numbers.</p>
+
+      {/* Mood/Energy/Focus chart */}
+      <Card>
+        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Mood, Energy & Focus (14 days)</h3>
+        <p style={{fontSize:12,color:C.txtM,margin:"0 0 16px"}}>Do they move together or apart?</p>
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" stroke={C.brd}/>
+            <XAxis dataKey="date" tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
+            <YAxis domain={[0,5]} tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
+            <Tooltip contentStyle={{borderRadius:12,border:`1px solid ${C.brd}`,fontSize:13}}/>
+            <Line type="monotone" dataKey="mood" stroke={C.pri} strokeWidth={2.5} dot={{r:3}} name="Mood" connectNulls/>
+            <Line type="monotone" dataKey="energy" stroke={C.acc} strokeWidth={2} dot={{r:3}} name="Energy" connectNulls strokeDasharray="5 5"/>
+            <Line type="monotone" dataKey="focus" stroke={C.purp} strokeWidth={2} dot={{r:3}} name="Focus" connectNulls strokeDasharray="2 4"/>
+          </LineChart>
+        </ResponsiveContainer>
+        <div style={{display:"flex",justifyContent:"center",gap:16,marginTop:8}}>
+          <span style={{fontSize:12,color:C.pri}}>● Mood</span>
+          <span style={{fontSize:12,color:C.acc}}>● Energy</span>
+          <span style={{fontSize:12,color:C.purp}}>● Focus</span>
+        </div>
+      </Card>
+
+      {/* Sleep chart */}
+      <Card>
+        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>
+          <Bed size={16} style={{marginRight:6,verticalAlign:"middle"}}/>Sleep (14 days)
+        </h3>
+        <p style={{fontSize:12,color:C.txtM,margin:"0 0 16px"}}>Hours per night — look for patterns with your mood.</p>
+        <ResponsiveContainer width="100%" height={150}>
+          <BarChart data={sleepData}>
+            <XAxis dataKey="day" tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
+            <YAxis domain={[0,12]} tick={{fontSize:10,fill:C.txtM}} axisLine={false} tickLine={false}/>
+            <Tooltip contentStyle={{borderRadius:12,border:`1px solid ${C.brd}`,fontSize:13}} formatter={v=>[`${v} hrs`,"Sleep"]}/>
+            <Bar dataKey="hours" fill={C.purpL} radius={[6,6,0,0]} barSize={16}/>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* Emotions */}
+      {topEmotions.length>0 && (
+        <Card>
+          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 16px"}}>Emotional Landscape</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={topEmotions} layout="vertical">
+              <XAxis type="number" hide/>
+              <YAxis dataKey="name" type="category" tick={{fontSize:12,fill:C.txt}} axisLine={false} tickLine={false} width={100}/>
+              <Bar dataKey="count" fill={C.priL} radius={[0,8,8,0]} barSize={18}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
+      {/* Pattern Analysis */}
+      <Card>
+        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>Pattern Analysis</h3>
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.brd}`}}>
+          <div style={{width:40,height:40,borderRadius:12,background:(spiral==="spiral"||spiral==="low")?C.dangerL+"40":C.accL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {spiral==="spiral"?<TrendingDown size={20} color={C.danger}/>:spiral==="low"?<AlertTriangle size={20} color={C.pri}/>:<TrendingUp size={20} color={C.acc}/>}
+          </div>
+          <div>
+            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>{spiral==="spiral"?"Downward Trend Detected":spiral==="low"?"Below Average Mood":"Mood Looking Stable"}</div>
+            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>{spiral==="spiral"?"Your mood has been declining. Consider reaching out to someone.":spiral==="low"?"Recent entries show lower mood. Be extra gentle.":"No concerning patterns. Keep tracking!"}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:`1px solid ${C.brd}`}}>
+          <div style={{width:40,height:40,borderRadius:12,background:C.priL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}><Target size={20} color={C.pri}/></div>
+          <div>
+            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>Tracking Consistency</div>
+            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>{streak>=7?`Amazing — ${streak} day streak!`:streak>=3?`${streak} day streak — building a habit!`:"Try checking in daily for best insights."}</div>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0"}}>
+          <div style={{width:40,height:40,borderRadius:12,background:C.purpL+"40",display:"flex",alignItems:"center",justifyContent:"center"}}><Bed size={20} color={C.purp}/></div>
+          <div>
+            <div style={{fontWeight:600,fontSize:14,color:C.txt}}>Sleep Impact</div>
+            <div style={{fontSize:12,color:C.txtL,marginTop:2}}>
+              {(()=>{
+                const withSleep = entries.filter(e=>e.sleepQuality&&e.mood);
+                if(withSleep.length<5) return "Keep logging sleep — patterns will emerge after a few entries.";
+                const good = withSleep.filter(e=>e.sleepQuality>=4);
+                const bad = withSleep.filter(e=>e.sleepQuality<=2);
+                const goodMood = good.length>0?(good.reduce((a,e)=>a+e.mood,0)/good.length).toFixed(1):0;
+                const badMood = bad.length>0?(bad.reduce((a,e)=>a+e.mood,0)/bad.length).toFixed(1):0;
+                if(good.length>0&&bad.length>0) return `Good sleep = avg mood ${goodMood}/5. Poor sleep = avg mood ${badMood}/5. Sleep matters.`;
+                return "Building sleep/mood correlation data...";
+              })()}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Cycle + Mood */}
+      {entries.some(e=>e.cycle) && (
+        <Card>
+          <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 4px"}}>Cycle & Mood Connection</h3>
+          <p style={{fontSize:12,color:C.txtM,margin:"0 0 14px"}}>Average mood by cycle phase — powerful data for your doctor.</p>
+          {CYCLE_PHASES.filter(p=>p.id!=="unsure"&&p.id!=="na").map(phase=>{
+            const pe = entries.filter(e=>e.cycle===phase.id&&e.mood);
+            if(!pe.length) return null;
+            const avg = (pe.reduce((a,e)=>a+e.mood,0)/pe.length).toFixed(1);
+            return (
+              <div key={phase.id} style={{marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:13,color:C.txt}}>{phase.emoji} {phase.label}</span>
+                  <span style={{fontSize:13,fontWeight:600,color:phase.color}}>{avg}/5</span>
+                </div>
+                <div style={{height:8,borderRadius:4,background:C.brd}}>
+                  <div style={{height:"100%",borderRadius:4,background:phase.color,width:`${(avg/5)*100}%`,transition:"width 0.5s"}}/>
+                </div>
+                <div style={{fontSize:11,color:C.txtM,marginTop:2}}>{pe.length} entries</div>
+              </div>
+            );
+          })}
+        </Card>
+      )}
+
+      {/* Mood Heatmap */}
+      <Card>
+        <h3 style={{fontSize:15,fontWeight:600,color:C.txt,margin:"0 0 14px"}}>Daily Mood Map (14 Days)</h3>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:6}}>
+          {days14.map(d=>{
+            const de=entries.filter(e=>e.date===d);
+            const am=de.length>0?Math.round(de.reduce((a,e)=>a+(e.mood||3),0)/de.length):0;
+            const cols=["transparent","#D4736A","#E8985E","#E8B44E","#A8D0C4","#7EB5A6"];
+            return (
+              <div key={d} style={{aspectRatio:"1",borderRadius:10,background:am>0?cols[am]+"60":C.bg,border:`1.5px solid ${am>0?cols[am]:C.brd}`,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontSize:10,color:C.txtM}}>
+                <div style={{fontWeight:600}}>{dayName(d)}</div>
+                <div>{new Date(d).getDate()}</div>
+                {am>0 && <div style={{fontSize:14,marginTop:2}}>{MOODS[5-am]?.emoji}</div>}
+              </div>
+            );
           })}
         </div>
       </Card>
@@ -1807,7 +2034,7 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
           let report = `ADHD TRACKING REPORT — Last 30 Days\n`;
           report += `Generated: ${new Date().toLocaleDateString("en-AU",{day:"numeric",month:"long",year:"numeric"})}\n`;
           report += `Patient: ${userName||"—"}\n`;
-          report += `─────────────────────────────────────\n\n`;
+          report += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
           report += `OVERVIEW (${last30.length} check-ins)\n`;
           report += `  Avg Mood: ${moodAvg}/5  |  Avg Energy: ${energyAvg}/5  |  Avg Focus: ${focusAvg}/5\n`;
           report += `  Avg Sleep: ${sleepAvg} hrs  |  Sleep Quality: ${sleepQAvg}/5\n`;
@@ -1824,7 +2051,7 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
               report+=`  ${label}: avg mood ${avg}/5 (${data.count} entries)\n`;
             });
           }
-          report += `\n─────────────────────────────────────\n`;
+          report += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
           report += `Generated by Hummingbird App\n`;
 
           // Copy to clipboard
@@ -1845,9 +2072,9 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // REMINDERS
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   const renderReminders = () => (
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
@@ -1909,9 +2136,9 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
     </div>
   );
 
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   // MAIN RENDER
-  // ═════════════════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════
   return (
     <div style={{fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:C.bg,minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
       {notif && (
@@ -1926,6 +2153,7 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
         {tab==="checkin"&&renderCheckin()}
         {tab==="journal"&&renderJournal()}
         {tab==="meds"&&renderMeds()}
+        {tab==="habits"&&renderHabits()}
         {tab==="toolkit"&&renderToolkit()}
         {tab==="insights"&&renderInsights()}
         {tab==="reminders"&&renderReminders()}
@@ -1973,3 +2201,4 @@ ight:600,color:C.txt,margin:"0 0 4px"}}>Box Breathing</h4>
     </div>
   );
 }
+
